@@ -3,6 +3,7 @@ import numpy as np
 from sklearn.tree import DecisionTreeClassifier as DTC
 from sklearn.metrics import accuracy_score
 
+
 class Node:
     def __init__(self, value, parent=None):
         self.value = value
@@ -20,15 +21,16 @@ class Node:
         if proot != qroot:
             qroot.parent = proot
 
-if __name__=="__main__":
+
+if __name__ == "__main__":
     '''
     First part: group instances in X into clusters,
     and sort them with cluster id
     '''
-    x1=pd.read_csv(r"../X1.csv",encoding="utf-8")
-    y1=pd.read_csv(r"../Y1.csv",encoding="utf-8")
-    lid=y1['lid'].to_list()
-    rid=y1['rid'].to_list()
+    x1 = pd.read_csv(r"../X1.csv", encoding="utf-8")
+    y1 = pd.read_csv(r"../Y1.csv", encoding="utf-8")
+    lid = y1['lid'].to_list()
+    rid = y1['rid'].to_list()
     id_node_map = {}
     length = len(lid)
     for i in range(length):
@@ -48,24 +50,24 @@ if __name__=="__main__":
     allNodes = {}
     ids = x1['id'].to_list()
     max_id = 1
-    cluster_list=[]
-    invalid_group=1
+    cluster_list = []
+    invalid_group = 1
     for i in ids:
         try:
-             currentNode = id_node_map[str(i)]
+            currentNode = id_node_map[str(i)]
         except:
-             currentNode=Node(i)
-             invalid_group+=1
-        rootNode=currentNode.findRoot()
+            currentNode = Node(i)
+            invalid_group += 1
+        rootNode = currentNode.findRoot()
         if str(rootNode.value) not in allNodes:
-            allNodes[str(rootNode.value)]=max_id
+            allNodes[str(rootNode.value)] = max_id
             cluster_list.append(max_id)
-            max_id+=1
+            max_id += 1
         else:
             cluster_list.append(allNodes[str(rootNode.value)])
     print(max_id)
     print(invalid_group)
-    x1['cluster']=cluster_list
+    x1['cluster'] = cluster_list
     x1.sort_values(by=['cluster'], inplace=True)
     '''
     Second part: feature selection
@@ -88,14 +90,14 @@ if __name__=="__main__":
                     continue
                 record_feature.add(string)
             id_feature[str(rid)] = record_feature
-            #merge instance feature to cluster feature
+            # merge instance feature to cluster feature
             if first_flag:
                 first_flag = False
                 current_cluster_set = current_cluster_set.union(record_feature)
             else:
                 current_cluster_set = current_cluster_set.intersection(record_feature)
         cluster_feature.append(current_cluster_set)
-        #merge cluster feature to all the features of the dataset
+        # merge cluster feature to all the features of the dataset
         all_feature_set = all_feature_set.union(current_cluster_set)
 
     datalist = x1.values.tolist()
@@ -121,15 +123,17 @@ if __name__=="__main__":
     clf = DTC()
     clf = clf.fit(X, Y)
     y_predict = clf.predict(X)
-    print(accuracy_score(Y,y_predict))
+    print(accuracy_score(Y, y_predict))
 
     '''
     (Optional): save the model
     '''
     from sklearn.externals import joblib
+
     joblib.dump(clf, 'simpleDecisionTree.bin')
 
     import pickle
+
     feature_file = open("feature_list.txt", 'wb')
-    pickle.dump(feature_list,feature_file)
+    pickle.dump(feature_list, feature_file)
     feature_file.close()
