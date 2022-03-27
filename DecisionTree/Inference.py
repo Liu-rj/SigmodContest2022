@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 from sklearn.tree import DecisionTreeClassifier as DTC
 from sklearn.metrics import accuracy_score
-from sklearn.externals import joblib
+import joblib
 import pickle
 
 def infer_x1(csv_path,feature_path,clf_path,gnd_file=None):
