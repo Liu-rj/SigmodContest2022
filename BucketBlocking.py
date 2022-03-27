@@ -1,4 +1,5 @@
 import pandas as pd
+from typing import *
 
 
 def cal_recall():
@@ -35,7 +36,7 @@ if __name__ == '__main__':
     nonsense = ['|', ',', '-', ':', '/', '+', '&']
     X = pd.read_csv('X1.csv')
     Y = pd.read_csv('Y1.csv')
-    buckets: list[tuple[set[str], list[int]]] = []
+    buckets: List[Tuple[Set[str], List[int]]] = []
     for i in range(X.shape[0]):
         max_similarity = 0
         target_bucket = None
