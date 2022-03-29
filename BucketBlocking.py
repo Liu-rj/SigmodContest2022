@@ -38,12 +38,6 @@ def cal_recall(data, gnd):
     #                 break
 
 
-def save_output(pairs_df, size):
-    if pairs_df.shape[0] > size:
-        pairs_df = pairs_df[:size]
-    pairs_df.to_csv("output.csv", index=False)
-
-
 def bucket_blocking(data) -> List[Tuple[Set[str], List[int]]]:
     buckets: List[Tuple[Set[str], List[int]]] = []
     for i in range(data.shape[0]):
@@ -76,14 +70,29 @@ def gen_candidates(buckets) -> []:
     return candidates_pair
 
 
+def save_output(pairs_x1, expected_size_x1, pairs_x2, expected_size_x2):
+    if len(pairs_x1) > expected_size_x1:
+        pairs_x1 = pairs_x1[:expected_size_x1]
+    elif len(pairs_x1) < expected_size_x1:
+        pairs_x1.extend([(0, 0)] * (expected_size_x1 - len(pairs_x1)))
+    if len(pairs_x2) > expected_size_x2:
+        pairs_x2 = pairs_x2[:expected_size_x2]
+    elif len(pairs_x2) < expected_size_x2:
+        pairs_x2.extend([(0, 0)] * (expected_size_x2 - len(pairs_x2)))
+    output = pairs_x1 + pairs_x2
+    output_df = pd.DataFrame(output, columns=["left_instance_id", "right_instance_id"])
+    output_df.to_csv("output.csv", index=False)
+
+
 if __name__ == '__main__':
     raw_data = pd.read_csv('X1.csv')
     gnd = pd.read_csv('Y1.csv')
     dataset = extract_x1(raw_data)
-    candidates = block_x1(dataset)
-    save_output(candidates, 1000000)
+    candidates_x1 = block_x1(dataset)
     # cal_recall(raw_data, gnd)
 
+    candidates_x2 = [(0, 0)] * 2000000
+    save_output(candidates_x1, 1000000, candidates_x2, 2000000)
     # raw_data = pd.read_csv('X2.csv')
     # gnd = pd.read_csv('Y2.csv')
     # dataset = extract_x2(raw_data)

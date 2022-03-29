@@ -186,20 +186,11 @@ def block_x1(dataset: pd.DataFrame):
             for i in clusters[c]:
                 for j in clusters[c]:
                     if i < j:
-                        couples.add((i, j, 1))
+                        couples.add((i, j))
                     if i > j:
-                        couples.add((j, i, 1))
+                        couples.add((j, i))
 
-    output = couples
-    output = pd.DataFrame(
-        output,
-        columns=[
-            'left_instance_id',
-            'right_instance_id',
-            'label'])
-    output.drop(columns=['label'], inplace=True)
-
-    return output
+    return list(couples)
 
 
 def block_x2(dataset: pd.DataFrame):
@@ -465,15 +456,5 @@ def block_x2(dataset: pd.DataFrame):
             for i in clusters[c]:
                 for j in clusters[c]:
                     if i < j:
-                        couples.add((i, j, 1))
-
-    output = couples
-    output = pd.DataFrame(
-        output,
-        columns=[
-            'left_instance_id',
-            'right_instance_id',
-            'label'])
-    output.drop(columns=['label'], inplace=True)
-
-    return output
+                        couples.add((i, j))
+    return list(couples)
