@@ -1,9 +1,9 @@
 import pandas as pd
+from typing import *
 
-if __name__ == '__main__':
-    X = pd.read_csv('X1.csv')
-    Y = pd.read_csv('Y1.csv')
-    unions: list[set] = []
+
+def back_union(Y) -> List[Set]:
+    unions: List[Set] = []
     for i in range(Y.shape[0]):
         found = False
         candidates = []
@@ -21,6 +21,13 @@ if __name__ == '__main__':
             unions.append(union)
         if not found:
             unions.append({Y['lid'][i], Y['rid'][i]})
+    return unions
+
+
+if __name__ == '__main__':
+    X = pd.read_csv('X1.csv')
+    Y = pd.read_csv('Y1.csv')
+    unions = back_union(Y)
     for union in unions:
         print(union)
         for ele in union:
