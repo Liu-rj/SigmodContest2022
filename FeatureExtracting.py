@@ -21,7 +21,7 @@ def extract_x1(data):
          name_family: family name of computer;
          title: title information of instance}
 
-         it the value can't extract from the information given, '0' will be filled.
+         if the value can't extract from the information given, '0' will be filled.
     """
     brands = ['dell', 'lenovo', 'acer', 'asus', 'hp']
 
