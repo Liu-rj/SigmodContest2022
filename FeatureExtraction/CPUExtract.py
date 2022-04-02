@@ -1,3 +1,4 @@
+from operator import le
 import pandas as pd
 import re
 
@@ -129,6 +130,9 @@ def HierarchicalBlock(data,attr,limit):
         # for id in group:
         #     print("%d: %s"%(data['cluster'][id],data[attr][id]))
         # print()
+        # if len(key)==0 or length>50:
+        #     # fourth filter: \s[a-z]*
+        #     continue
         if length>1:
             for i in range(length-1):
                 for j in range(i+1,length):
@@ -188,16 +192,14 @@ def HierarchicalBlock(data,attr,limit):
     
 
 if __name__=='__main__':
-    x1=pd.read_csv("../records/x1_sort.csv")
+    x1=pd.read_csv("../X1.csv")
     left,right=HierarchicalBlock(x1,'title',1000000)
-    # x2=pd.read_csv("../records/x2_sort.csv")
-    # x2_left,x2_righy=HierarchicalBlock(x2,'name',2000000)
-    # left+=x2_left
-    # right+=x2_righy
-    left.extend([0]*2000000)
-    right.extend([0]*2000000)
+    x2=pd.read_csv("../X2.csv")
+    x2_left,x2_right=HierarchicalBlock(x2,'name',2000000)
+    left+=x2_left
+    right+=x2_right
     output=pd.DataFrame()
     output['left_instance_id']=left
     output['right_instance_id']=right
-    output.to_csv("output.csv",index=False)
+    output.to_csv("hierarchical2.csv",index=False)
     
