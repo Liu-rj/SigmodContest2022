@@ -265,7 +265,7 @@ def extract_x1(data):
 def extract_x2(data: pd.DataFrame) -> pd.DataFrame:
     """Clean X2.csv data to a readable format.
 
-    :param data: X4.csv
+    :param data: X2.csv
 
     :return:
         A DataFrame which contains following columns:
@@ -302,15 +302,10 @@ def extract_x2(data: pd.DataFrame) -> pd.DataFrame:
               'copper', 'red', 'black', 'blue', 'white', 'silver', 'gold', 'violet', 'purple',
               'brown', 'orange', 'coral', 'pink']
 
-    names = data['name'].fillna('')
-    instance_ids = data['id']
-    names = names.values.tolist()
-    instance_ids = instance_ids.values.tolist()
-
     result = []
 
-    for row in range(len(instance_ids)):
-        name_info = names[row]
+    for row in range(data.shape[0]):
+        name_info = data['name'][row]
 
         size = '0'
         mem_type = '0'
@@ -634,7 +629,7 @@ def extract_x2(data: pd.DataFrame) -> pd.DataFrame:
             pass
 
         result.append([
-            instance_ids[row],
+            data['id'][row],
             brand,
             size,
             mem_type,

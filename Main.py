@@ -53,20 +53,19 @@ def save_output(pairs_x1, expected_size_x1, pairs_x2, expected_size_x2):
     elif len(pairs_x2) < expected_size_x2:
         pairs_x2.extend([(0, 0)] * (expected_size_x2 - len(pairs_x2)))
     output = pairs_x1 + pairs_x2
-    output_df = pd.DataFrame(output, columns=["left_instance_id", "right_instance_id"])
-    output_df.to_csv("output.csv", index=False)
+    output_df = pd.DataFrame(output, columns=['left_instance_id', 'right_instance_id'])
+    output_df.to_csv('output.csv', index=False)
 
 
 brands_x1 = ['dell', 'lenovo', 'acer', 'asus', 'hp', 'panasonic', 'toshiba', 'sony', 'epson']
 
 
 if __name__ == '__main__':
-    raw_data = pd.read_csv('X1.csv')
-    raw_data = pd.read_csv('X2.csv')
-    raw_data = raw_data[['id', 'name']]
-    raw_data['name'] = raw_data.name.str.lower()
-    features_x2 = extract_x2(raw_data)
-    candidates_x2 = block_x2(features_x2)
+    features = pd.read_csv('X1.csv')
+    features = pd.read_csv('X2.csv')
+    features['name'] = features.name.str.lower()
+    features = extract_x2(features)
+    candidates_x2 = block_x2(features)
     candidates_x1 = []
     save_output(candidates_x1, 1000000, candidates_x2, 2000000)
     # gnd_truth = pd.read_csv('Y2.csv')
