@@ -61,7 +61,7 @@ brands_x1 = ['dell', 'lenovo', 'acer', 'asus', 'hp', 'panasonic', 'toshiba', 'so
 
 
 if __name__ == '__main__':
-    # raw_data = pd.read_csv('X1.csv')
+    raw_data = pd.read_csv('X1.csv')
     raw_data = pd.read_csv('X2.csv')
     raw_data = raw_data[['id', 'name']]
     raw_data['name'] = raw_data.name.str.lower()
