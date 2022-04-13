@@ -1,8 +1,9 @@
 # Pycharm project
 .idea/
 
-# Output csv
+# Unused csv
 output.csv
+X2_BIG.csv
 
 # reprozip
 .reprozip-trace/

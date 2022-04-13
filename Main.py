@@ -1,13 +1,13 @@
 import pandas as pd
-from BackUnion import back_union
 from FeatureExtracting import extract_x1, extract_x2
 from EntityBlocking import block_x1, block_x2
+from BucketBlocking import bucket_blocking
 import time
+from typing import *
 
 
 def cal_recall(data, gnd):
     predict_pd = pd.read_csv('output.csv')
-    # unions = back_union(gnd)
     gnd['cnt'] = 0
     predict = predict_pd.values.tolist()
     for idx in range(len(predict)):
@@ -21,21 +21,13 @@ def cal_recall(data, gnd):
             exit()
     print(sum(gnd['cnt']))
     print(sum(gnd['cnt']) / gnd.values.shape[0])
-    # left = gnd[gnd['cnt'] == 0].reset_index()
-    # with open('records/weird.txt', 'w', encoding='utf-8') as file:
-    #     for idx in range(left.shape[0]):
-    #         print(left['lid'][idx], ',', left['rid'][idx])
-    #         print(data[data['id'] == left['lid'][idx]].iloc[0])
-    #         print(data[data['id'] == left['rid'][idx]].iloc[0])
-    #         print()
-    #         for union in unions:
-    #             if left['lid'][idx] in union or left['rid'][idx] in union:
-    #                 file.write(str(union) + '\n')
-    #                 for it in union:
-    #                     file.write(data[data['id'] == it]['title'].iloc[0] + '\n')
-    #                 file.write('\n')
-    #                 unions.remove(union)
-    #                 break
+    left = gnd[gnd['cnt'] == 0].reset_index()
+    # print that are uncovered
+    # for idx in range(left.shape[0]):
+    #     print(left['lid'][idx], ',', left['rid'][idx])
+    #     print(data[data['id'] == left['lid'][idx]]['title'].iloc[0])
+    #     print(data[data['id'] == left['rid'][idx]]['title'].iloc[0])
+    #     print()
 
 
 def gen_candidates(buckets) -> []:
@@ -66,36 +58,65 @@ def save_output(pairs_x1, expected_size_x1, pairs_x2, expected_size_x2):
     output_df.to_csv("output.csv", index=False)
 
 
-brands = ['dell', 'lenovo', 'acer', 'asus', 'hp', 'panasonic', 'toshiba', 'sony', 'epson']
+brands_x1 = ['dell', 'lenovo', 'acer', 'asus', 'hp', 'panasonic', 'toshiba', 'sony', 'epson']
+brands_x2 = ['sandisk', 'lexar', 'kingston', 'intenso', 'toshiba', 'sony', 'pny', 'samsung', '']
+families_x2 = {'sandisk': ['extreme', 'cruzer', 'ultra', 'traveler', 'sdhc', 'usb', 'adapt'],
+               'lexar': ['ultra', 'jumpdrive'],
+               'toshiba': ['exceria', 'traveler', 'sdhc'],
+               'kingston': ['traveler'],
+               'sony': ['USM32GQX'],
+               'intenso': ['premium', 'ultra', 'micro'],
+               'pny': [],
+               'samsung': [],
+               '': ['microsdxc']}
 
 
 def extract(data: pd.DataFrame):
-    time1 = time.time()
-    titles = data['title']
-    ids = data['id']
-    num = 0
-    for i in range(len(titles)):
-        have_brand = False
-        for brand in brands:
-            if brand in titles[i].lower():
-                have_brand = True
+    buckets: Dict[str, List] = {}
+    for idx in range(data.shape[0]):
+        title = data['title'][idx]
+        key = '.'
+        for brand in brands_x2:
+            if brand in title:
+                key = brand + key
+                for name in families_x2[brand]:
+                    if name in title:
+                        key = key + name
+                        break
                 break
-        if not have_brand:
-            num += 1
-            print(ids[i], titles[i])
-    time2 = time.time()
-    print(num)
-    print(time2 - time1)
-    # data['brand'] = data.apply(lambda x: brands[0] in x.title.lower(), axis=1)
-    # for brand in brands:
-    #     data[brand] = data.apply(lambda x: brand in x.title.lower(), axis=1)
-    # print(data)
+        if not key.startswith('.'):
+            if key in buckets.keys():
+                buckets[key].append((data['id'][idx], title))
+            else:
+                buckets[key] = [(data['id'][idx], title)]
+    candidates = []
+    for key in buckets.keys():
+        bucket = buckets[key]
+        for i in range(len(bucket)):
+            for j in range(i + 1, len(bucket)):
+                if bucket[i][0] < bucket[j][0]:
+                    candidates.append((bucket[i][0], bucket[j][0]))
+                elif bucket[i][0] > bucket[j][0]:
+                    candidates.append((bucket[j][0], bucket[i][0]))
+    output_df = pd.DataFrame(candidates, columns=["left_instance_id", "right_instance_id"])
+    output_df.to_csv("output.csv", index=False)
+    # cal_recall(raw_data, gnd_truth)
 
 
 if __name__ == '__main__':
-    raw_data = pd.read_csv('X1.csv')
-    gnd_truth = pd.read_csv('Y1.csv')
-    extract(raw_data)
+    raw_data = pd.read_csv('X2.csv')
+    gnd_truth = pd.read_csv('Y2.csv')
+    raw_data = raw_data[['id', 'name']]
+    raw_data['name'] = raw_data.name.str.lower()
+    # buckets = bucket_blocking(raw_data)
+    # candidates = gen_candidates(buckets)
+    # output_df = pd.DataFrame(candidates, columns=["left_instance_id", "right_instance_id"])
+    # output_df.to_csv("output.csv", index=False)
+    # cal_recall(raw_data, gnd_truth)
+
+    features = extract_x2(raw_data)
+    print(features[features['type'] != '0']['type'])
+
     # dataset = extract_x1(raw_data)
     # candidates_x1 = block_x1(dataset)
     #
