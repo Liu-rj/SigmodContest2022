@@ -69,4 +69,4 @@ if __name__ == '__main__':
     candidates_x1 = []
     save_output(candidates_x1, 1000000, candidates_x2, 2000000)
     # gnd_truth = pd.read_csv('Y2.csv')
-    # cal_recall(raw_data, gnd_truth)
+    # cal_recall(features, gnd_truth)

@@ -261,57 +261,57 @@ def block_x2(dataset: pd.DataFrame):
                 put_into_buckets(buckets, brand + capacity + mem_type + product_type, instance_id)
             else:
                 unidentified.append((instance_id, title))
-        elif brand == 'sony':
-            if (mem_type in ('ssd', 'microsd') or capacity == '1tb') and capacity != '0':
-                put_into_buckets(buckets, brand + capacity + mem_type, instance_id)
-            elif mem_type != '0' and capacity != '0' and product_type != '0':
-                put_into_buckets(buckets, brand + capacity + mem_type + product_type, instance_id)
-            else:
-                unidentified.append((instance_id, title))
-        elif brand == 'sandisk':
-            if capacity != '0' and mem_type != '0':
-                put_into_buckets(buckets, brand + capacity + mem_type + model, instance_id)
-            else:
-                unidentified.append((instance_id, title))
-        elif brand == 'pny':
-            if capacity != '0' and mem_type != '0':
-                put_into_buckets(buckets, brand + capacity + mem_type, instance_id)
-            else:
-                unidentified.append((instance_id, title))
-        elif brand == 'intenso':
-            if capacity != '0' and product_type != '0':
-                put_into_buckets(buckets, brand + capacity + product_type, instance_id)
-            else:
-                unidentified.append((instance_id, title))
-        elif brand == 'kingston':
-            if mem_type != '0' and capacity != '0':
-                put_into_buckets(buckets, brand + capacity + mem_type, instance_id)
-            else:
-                unidentified.append((instance_id, title))
-        elif brand == 'samsung':
-            if mem_type in ('microsd', 'ssd', 'sd', 'usb') and capacity != '0' and model != '0':
-                put_into_buckets(buckets, brand + capacity + mem_type + model, instance_id)
-            elif mem_type != '0' and capacity != '0' and product_type != '0' and model != '0':
-                put_into_buckets(buckets, brand + capacity + mem_type + product_type + model, instance_id)
-            else:
-                unidentified.append((instance_id, title))
-        elif brand == 'toshiba':
-            if capacity != '0' and mem_type != '0' and model != '0':
-                put_into_buckets(buckets, brand + capacity + model + mem_type, instance_id)
-            elif capacity != '0' and mem_type != '0' and product_type != '0':
-                put_into_buckets(buckets, brand + capacity + product_type + mem_type, instance_id)
-            else:
-                unidentified.append((instance_id, title))
-        elif brand == 'transcend':
-            if capacity != '0' and mem_type != '0':
-                put_into_buckets(buckets, brand + capacity + mem_type, instance_id)
-            else:
-                unidentified.append((instance_id, title))
-        else:
-            if brand != '0' and capacity != '0' and mem_type != '0':
-                put_into_buckets(buckets, brand + capacity + mem_type, instance_id)
-            else:
-                unidentified.append((instance_id, title))
+        # elif brand == 'sony':
+        #     if (mem_type in ('ssd', 'microsd') or capacity == '1tb') and capacity != '0':
+        #         put_into_buckets(buckets, brand + capacity + mem_type, instance_id)
+        #     elif mem_type != '0' and capacity != '0' and product_type != '0':
+        #         put_into_buckets(buckets, brand + capacity + mem_type + product_type, instance_id)
+        #     else:
+        #         unidentified.append((instance_id, title))
+        # elif brand == 'sandisk':
+        #     if capacity != '0' and mem_type != '0':
+        #         put_into_buckets(buckets, brand + capacity + mem_type + model, instance_id)
+        #     else:
+        #         unidentified.append((instance_id, title))
+        # elif brand == 'pny':
+        #     if capacity != '0' and mem_type != '0':
+        #         put_into_buckets(buckets, brand + capacity + mem_type, instance_id)
+        #     else:
+        #         unidentified.append((instance_id, title))
+        # elif brand == 'intenso':
+        #     if capacity != '0' and product_type != '0':
+        #         put_into_buckets(buckets, brand + capacity + product_type, instance_id)
+        #     else:
+        #         unidentified.append((instance_id, title))
+        # elif brand == 'kingston':
+        #     if mem_type != '0' and capacity != '0':
+        #         put_into_buckets(buckets, brand + capacity + mem_type, instance_id)
+        #     else:
+        #         unidentified.append((instance_id, title))
+        # elif brand == 'samsung':
+        #     if mem_type in ('microsd', 'ssd', 'sd', 'usb') and capacity != '0' and model != '0':
+        #         put_into_buckets(buckets, brand + capacity + mem_type + model, instance_id)
+        #     elif mem_type != '0' and capacity != '0' and product_type != '0' and model != '0':
+        #         put_into_buckets(buckets, brand + capacity + mem_type + product_type + model, instance_id)
+        #     else:
+        #         unidentified.append((instance_id, title))
+        # elif brand == 'toshiba':
+        #     if capacity != '0' and mem_type != '0' and model != '0':
+        #         put_into_buckets(buckets, brand + capacity + model + mem_type, instance_id)
+        #     elif capacity != '0' and mem_type != '0' and product_type != '0':
+        #         put_into_buckets(buckets, brand + capacity + product_type + mem_type, instance_id)
+        #     else:
+        #         unidentified.append((instance_id, title))
+        # elif brand == 'transcend':
+        #     if capacity != '0' and mem_type != '0':
+        #         put_into_buckets(buckets, brand + capacity + mem_type, instance_id)
+        #     else:
+        #         unidentified.append((instance_id, title))
+        # else:
+        #     if brand != '0' and capacity != '0' and mem_type != '0':
+        #         put_into_buckets(buckets, brand + capacity + mem_type, instance_id)
+        #     else:
+        #         unidentified.append((instance_id, title))
 
     # solved_classes = set()
     # for s in solved_spec:
@@ -426,6 +426,4 @@ def block_x2(dataset: pd.DataFrame):
                     candidates.append((bucket[i], bucket[j]))
                 elif bucket[i] > bucket[j]:
                     candidates.append((bucket[j], bucket[i]))
-                if len(candidates) >= 2000000:
-                    return candidates
     return candidates
