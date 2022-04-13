@@ -12,7 +12,7 @@ def cal_recall(data, gnd):
     predict = predict_pd.values.tolist()
     for idx in range(len(predict)):
         if predict[idx][0] == 0:
-            break
+            continue
         index = gnd[(gnd['lid'] == predict[idx][0]) & (gnd['rid'] == predict[idx][1])].index.tolist()
         if len(index) > 0:
             gnd['cnt'][index[0]] += 1
@@ -59,40 +59,9 @@ def save_output(pairs_x1, expected_size_x1, pairs_x2, expected_size_x2):
 
 brands_x1 = ['dell', 'lenovo', 'acer', 'asus', 'hp', 'panasonic', 'toshiba', 'sony', 'epson']
 
-# def extract(data: pd.DataFrame):
-#     buckets: Dict[str, List] = {}
-#     for idx in range(data.shape[0]):
-#         title = data['title'][idx]
-#         key = '.'
-#         for brand in brands_x2:
-#             if brand in title:
-#                 key = brand + key
-#                 for name in families_x2[brand]:
-#                     if name in title:
-#                         key = key + name
-#                         break
-#                 break
-#         if not key.startswith('.'):
-#             if key in buckets.keys():
-#                 buckets[key].append((data['id'][idx], title))
-#             else:
-#                 buckets[key] = [(data['id'][idx], title)]
-#     candidates = []
-#     for key in buckets.keys():
-#         bucket = buckets[key]
-#         for i in range(len(bucket)):
-#             for j in range(i + 1, len(bucket)):
-#                 if bucket[i][0] < bucket[j][0]:
-#                     candidates.append((bucket[i][0], bucket[j][0]))
-#                 elif bucket[i][0] > bucket[j][0]:
-#                     candidates.append((bucket[j][0], bucket[i][0]))
-#     output_df = pd.DataFrame(candidates, columns=["left_instance_id", "right_instance_id"])
-#     output_df.to_csv("output.csv", index=False)
-#     # cal_recall(raw_data, gnd_truth)
-
 
 if __name__ == '__main__':
-    raw_data = pd.read_csv('X1.csv')
+    # raw_data = pd.read_csv('X1.csv')
     raw_data = pd.read_csv('X2.csv')
     raw_data = raw_data[['id', 'name']]
     raw_data['name'] = raw_data.name.str.lower()
