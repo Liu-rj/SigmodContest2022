@@ -263,7 +263,7 @@ def extract_x1(data):
 
 
 def extract_x2(data: pd.DataFrame) -> pd.DataFrame:
-    """Clean X4.csv data to a readable format.
+    """Clean X2.csv data to a readable format.
 
     :param data: X4.csv
 
@@ -281,16 +281,16 @@ def extract_x2(data: pd.DataFrame) -> pd.DataFrame:
 
          if the value can't extract from the information given, '0' will be filled.
     """
-    brands = [
-        "intenso",
-        "pny",
-        "lexar",
-        "sony",
-        "sandisk",
-        "kingston",
-        "samsung",
-        "toshiba",
-        "transcend"]
+    brands = ['sandisk', 'lexar', 'kingston', 'intenso', 'toshiba', 'sony', 'pny', 'samsung', '']
+    families = {'sandisk': ['extreme', 'cruzer', 'ultra', 'traveler', 'sdhc', 'usb', 'adapt'],
+                'lexar': ['ultra', 'jumpdrive'],
+                'toshiba': ['exceria', 'traveler', 'sdhc'],
+                'kingston': ['traveler'],
+                'sony': ['USM32GQX'],
+                'intenso': ['premium', 'ultra', 'micro'],
+                'pny': [],
+                'samsung': [],
+                '': ['microsdxc']}
 
     intenso_type = ["basic", "rainbow", "high speed", "speed", "premium", "alu", "business", "micro",
                     "imobile", "cmobile", "mini", "ultra", "slim", "flash", "mobile"]
