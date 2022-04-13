@@ -426,4 +426,6 @@ def block_x2(dataset: pd.DataFrame):
                     candidates.append((bucket[i], bucket[j]))
                 elif bucket[i] > bucket[j]:
                     candidates.append((bucket[j], bucket[i]))
+                if len(candidates) >= 2000000:
+                    return candidates
     return candidates
