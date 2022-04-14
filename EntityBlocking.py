@@ -1,3 +1,5 @@
+from collections import defaultdict
+
 import pandas as pd
 from typing import *
 
@@ -193,13 +195,6 @@ def block_x1(dataset: pd.DataFrame):
     return list(couples)
 
 
-def put_into_buckets(buckets: Dict[str, List], key: str, ele: int):
-    if key in buckets.keys():
-        buckets[key].append(ele)
-    else:
-        buckets[key] = [ele]
-
-
 def block_x2(dataset: pd.DataFrame):
     """
     Give an identification for each record according to their cleaned field values
@@ -236,7 +231,7 @@ def block_x2(dataset: pd.DataFrame):
     sony_capacity_single = ["1tb", "256gb"]
     sony_capacity_memtype_type = ["32gb", "4gb"]
 
-    buckets: Dict[str, List] = {}
+    buckets: Dict[str, List] = defaultdict(list)
     unidentified: List[Tuple[int, str]] = []
 
     for index, row in dataset.iterrows():
@@ -253,65 +248,66 @@ def block_x2(dataset: pd.DataFrame):
             product_type = model_2_type[model]
 
         if capacity in ('256gb', '512gb', '1tb', '2tb') and brand not in ('samsung', 'sandisk'):
-            put_into_buckets(buckets, brand + capacity, instance_id)
+            buckets[f'{brand}.{capacity}'].append(instance_id)
             continue
 
         if brand == 'lexar':
             if capacity != '0' and product_type != '0' and mem_type != '0':
-                put_into_buckets(buckets, brand + capacity + mem_type + product_type, instance_id)
+                buckets[f'{brand}.{capacity}.{mem_type}.{product_type}'].append(instance_id)
             else:
                 unidentified.append((instance_id, title))
         elif brand == 'sony':
             if (mem_type in ('ssd', 'microsd') or capacity == '1tb') and capacity != '0':
-                put_into_buckets(buckets, brand + capacity + mem_type, instance_id)
+                buckets[f'{brand}.{capacity}.{mem_type}'].append(instance_id)
             elif mem_type != '0' and capacity != '0' and product_type != '0':
-                put_into_buckets(buckets, brand + capacity + mem_type + product_type, instance_id)
+                buckets[f'{brand}.{capacity}.{mem_type}.{product_type}'].append(instance_id)
             else:
                 unidentified.append((instance_id, title))
-        # elif brand == 'sandisk':
-        #     if capacity != '0' and mem_type != '0':
-        #         put_into_buckets(buckets, brand + capacity + mem_type + model, instance_id)
-        #     else:
-        #         unidentified.append((instance_id, title))
+        elif brand == 'sandisk':
+            if capacity != '0' and mem_type != '0':
+                print(f'{brand}.{capacity}.{mem_type}.{model}')
+                buckets[f'{brand}.{capacity}.{mem_type}.{model}'].append(instance_id)
+            else:
+                unidentified.append((instance_id, title))
         elif brand == 'pny':
             if capacity != '0' and mem_type != '0':
-                put_into_buckets(buckets, brand + capacity + mem_type, instance_id)
+                buckets[f'{brand}.{capacity}.{mem_type}'].append(instance_id)
             else:
                 unidentified.append((instance_id, title))
         elif brand == 'intenso':
             if capacity != '0' and product_type != '0':
-                put_into_buckets(buckets, brand + capacity + product_type, instance_id)
+                buckets[f'{brand}.{capacity}.{product_type}'].append(instance_id)
             else:
                 unidentified.append((instance_id, title))
         elif brand == 'kingston':
             if mem_type != '0' and capacity != '0':
-                put_into_buckets(buckets, brand + capacity + mem_type, instance_id)
+                buckets[f'{brand}.{capacity}.{mem_type}'].append(instance_id)
             else:
                 unidentified.append((instance_id, title))
         elif brand == 'samsung':
             if mem_type in ('microsd', 'ssd', 'sd', 'usb') and capacity != '0' and model != '0':
-                put_into_buckets(buckets, brand + capacity + mem_type + model, instance_id)
+                buckets[f'{brand}.{capacity}.{mem_type}.{model}'].append(instance_id)
             elif mem_type != '0' and capacity != '0' and product_type != '0' and model != '0':
-                put_into_buckets(buckets, brand + capacity + mem_type + product_type + model, instance_id)
+                buckets[f'{brand}.{capacity}.{mem_type}.{product_type}.{model}'].append(instance_id)
             else:
                 unidentified.append((instance_id, title))
         elif brand == 'toshiba':
             if capacity != '0' and mem_type != '0' and model != '0':
-                put_into_buckets(buckets, brand + capacity + model + mem_type, instance_id)
+                buckets[f'{brand}.{capacity}.{model}.{mem_type}'].append(instance_id)
             elif capacity != '0' and mem_type != '0' and product_type != '0':
-                put_into_buckets(buckets, brand + capacity + product_type + mem_type, instance_id)
+                buckets[f'{brand}.{capacity}.{product_type}.{mem_type}'].append(instance_id)
             else:
                 unidentified.append((instance_id, title))
         elif brand == 'transcend':
             if capacity != '0' and mem_type != '0':
-                put_into_buckets(buckets, brand + capacity + mem_type, instance_id)
+                buckets[f'{brand}.{capacity}.{mem_type}'].append(instance_id)
             else:
                 unidentified.append((instance_id, title))
-        # else:
-        #     if brand != '0' and capacity != '0' and mem_type != '0':
-        #         put_into_buckets(buckets, brand + capacity + mem_type, instance_id)
-        #     else:
-        #         unidentified.append((instance_id, title))
+        else:
+            if brand != '0' and capacity != '0' and mem_type != '0':
+                buckets[f'{brand}.{capacity}.{mem_type}'].append(instance_id)
+            else:
+                unidentified.append((instance_id, title))
 
     # solved_classes = set()
     # for s in solved_spec:
@@ -415,7 +411,7 @@ def block_x2(dataset: pd.DataFrame):
     #     else:
     #         clusters.update({u['title']: [u['id']]})
 
-    # print(len(unidentified))
+    print('unidentified size: ', len(unidentified), flush=True)
 
     candidates = []
     for key in buckets.keys():
