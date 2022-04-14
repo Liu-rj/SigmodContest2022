@@ -3,196 +3,7 @@ from collections import defaultdict
 import pandas as pd
 from typing import *
 
-def block_x1(dataset: pd.DataFrame):
-    """ Call clean_x2.py;
-
-    Give an identification for each record according to their cleaned field values
-    and match records based on their identification
-
-    param dataset: feature Dataframe of X1 after extracting
-
-    :return:
-            A DataFrame of matched pairs which contains following columns:
-            {left_instance_id: the left instance of a matched pair
-             left_instance_id: the right instance of a matched pair}
-    """
-    pc_aliases = {
-        "2320": "3435", "v7482": "v7582", "810g2": "810", "2338": "2339",
-        "346058u": "3460", "4291": "4290", "4287": "4290", "0622": "0627"}
-
-    cpu_model_aliases = {
-        "hp": {"2410m": "2540m", "2620m": "2640m"},
-        "acer": {},
-        "lenovo": {},
-        "asus": {},
-        "dell": {}
-    }
-
-    model_family_2_pcname = {
-        "4010u aspire": "e1572"
-    }
-
-    pc_single = ["v7582", "15f009wm", "3093", "ux31a", "v3772", "v3572", "m731r", "e3111",
-                 "v3111", "15p030nr", "e5771", "e1731", "3437 ", "2170p", "e1532", "e1522",
-                 "e1571", "e5571", "15d053cl", "v5573", "3448", "8460p", "8570p",
-                 "2570p", "2760p", "0596", "547578", "547150", "547375"]
-
-    pc_core = ["e1572", "e1771", "810", "8560p", "3438"]
-    pc_model_capacity = ["2325", "3460"]
-    pc_capacity = ["9470m", "3444", "2339"]
-
-    solved_spec = []
-    unsolved_spec = []
-    instance_list = set()
-
-    for index, row in dataset.iterrows():
-        instance_id = row['id']
-        brand = row['brand']
-        cpu_core = row['cpu_core']
-        cpu_model = row['cpu_model']
-        cpu_frequency = row['cpu_frequency']
-        display_size = row['display_size']
-        pc_name = row['pc_name']
-        capacity = row['ram_capacity']
-        family = row['family']
-        title = row['title']
-        pc = {}
-
-        if (cpu_model + ' ' + family) in model_family_2_pcname.keys():
-            pc_name = model_family_2_pcname[(cpu_model + ' ' + family)]
-
-        if pc_name in pc_aliases.keys():
-            pc_name = pc_aliases[pc_name]
-
-        if brand in cpu_model_aliases.keys():
-            if cpu_model in cpu_model_aliases[brand].keys():
-                cpu_model = cpu_model_aliases[brand][cpu_model]
-
-        instance_list.add(instance_id)
-
-        pc['id'] = instance_id
-        pc['title'] = title
-        pc['brand'] = brand
-        pc['pc_name'] = pc_name
-        pc['cpu_model'] = cpu_model
-        pc['capacity'] = capacity
-        pc['cpu_core'] = cpu_core
-        pc['family'] = family
-        pc['cpu_frequency'] = cpu_frequency
-        pc['display_size'] = display_size
-
-        if pc_name != '0' and cpu_model != '0' and capacity != '0' and cpu_core != '0':
-            pc['identification'] = brand + ' ' + pc_name + \
-                                   ' ' + cpu_model + ' ' + capacity + ' ' + cpu_core
-            solved_spec.append(pc)
-        else:
-            unsolved_spec.append(pc)
-
-    for u in unsolved_spec.copy():
-        for s in solved_spec.copy():
-            if u['brand'] != '0' and u['pc_name'] != '0' and u['capacity'] != '0' and u['cpu_model'] != '0':
-                if u['brand'] == s['brand'] and u['pc_name'] == s['pc_name'] and u['capacity'] == s['capacity'] and \
-                        u['cpu_model'] == s['cpu_model']:
-                    if u['family'] == '0' or s['family'] == '0' or u['family'] == s['family']:
-                        u['identification'] = s['identification']
-                        solved_spec.append(u)
-                        unsolved_spec.remove(u)
-                        break
-            elif u['brand'] != '0' and u['pc_name'] != '0' and u['cpu_core'] != '0' and u['cpu_model'] != '0':
-                if u['brand'] == s['brand'] and u['pc_name'] == s['pc_name'] and u['cpu_model'] == s['cpu_model'] and \
-                        u['cpu_core'] == s['cpu_core']:
-                    if u['family'] == '0' or s['family'] == '0' or u['family'] == s['family']:
-                        u['identification'] = s['identification']
-                        solved_spec.append(u)
-                        unsolved_spec.remove(u)
-                        break
-            elif u['brand'] != '0' and u['capacity'] != '0' and u['cpu_core'] != '0' and u['pc_name'] != '0':
-                if u['brand'] == s['brand'] and u['pc_name'] == s['pc_name'] and u['cpu_core'] == s['cpu_core'] and \
-                        u['capacity'] == s['capacity']:
-                    if u['family'] == '0' or s['family'] == '0' or u['family'] == s['family']:
-                        u['identification'] = s['identification']
-                        solved_spec.append(u)
-                        unsolved_spec.remove(u)
-                        break
-            elif u['brand'] != '0' and u['capacity'] != '0' and u['cpu_core'] != '0' and u['cpu_model'] != '0':
-                if u['brand'] == s['brand'] and u['capacity'] == s['capacity'] and u['cpu_core'] == s['cpu_core'] and \
-                        u['cpu_model'] == s['cpu_model']:
-                    if u['family'] == '0' or s['family'] == '0' or u['family'] == s['family']:
-                        u['identification'] = s['identification']
-                        solved_spec.append(u)
-                        unsolved_spec.remove(u)
-                        break
-            elif u['brand'] != '0' and u['cpu_model'] != '0' and u['pc_name'] != '0':
-                if u['brand'] == s['brand'] and u['pc_name'] == s['pc_name'] and u['cpu_model'] == s['cpu_model']:
-                    if u['family'] == '0' or s['family'] == '0' or u['family'] == s['family']:
-                        u['identification'] = s['identification']
-                        solved_spec.append(u)
-                        unsolved_spec.remove(u)
-                        break
-            elif u['brand'] != '0' and u['capacity'] != '0' and u['cpu_model'] != '0' and u['display_size'] != '0' and \
-                    u['cpu_frequency'] != '0':
-                if u['brand'] == s['brand'] and u['capacity'] == s['capacity'] and \
-                        u['cpu_model'] == s['cpu_model'] and u['display_size'] == s['display_size'] and \
-                        u['cpu_frequency'] == s['cpu_frequency']:
-                    if u['family'] == '0' or s['family'] == '0' or u['family'] == s['family']:
-                        u['identification'] = s['identification']
-                        solved_spec.append(u)
-                        unsolved_spec.remove(u)
-                        break
-            elif u['brand'] != '0' and u['capacity'] != '0' and u['pc_name'] != '0' and u['display_size'] != '0' and \
-                    u['cpu_frequency'] != '0':
-                if u['brand'] == s['brand'] and u['capacity'] == s['capacity'] and u['pc_name'] == s['pc_name'] and \
-                        u['display_size'] == s['display_size'] and u['cpu_frequency'] == s['cpu_frequency']:
-                    if u['family'] == '0' or s['family'] == '0' or u['family'] == s['family']:
-                        u['identification'] = s['identification']
-                        solved_spec.append(u)
-                        unsolved_spec.remove(u)
-                        break
-
-    for i in unsolved_spec:
-        if i in solved_spec:
-            continue
-        for j in unsolved_spec:
-            if j in solved_spec:
-                continue
-            if i['id'] == j['id']:
-                continue
-            if i['brand'] == j['brand'] and i['capacity'] == j['capacity'] and \
-                    i['cpu_core'] == j['cpu_core'] and i['cpu_model'] == j['cpu_model'] and \
-                    i['pc_name'] == j['pc_name']:
-                i['identification'] = i['brand'] + i['capacity'] + \
-                                      i['cpu_core'] + i['cpu_model'] + i['pc_name']
-                j['identification'] = i['identification']
-                if i not in solved_spec:
-                    solved_spec.append(i)
-                if j not in solved_spec:
-                    solved_spec.append(j)
-
-    clusters = dict()
-
-    for s in solved_spec:
-        if s['identification'] in clusters.keys():
-            clusters[s['identification']].append(s['id'])
-        else:
-            clusters.update({s['identification']: [s['id']]})
-
-    for u in unsolved_spec:
-        if u['title'] in clusters.keys():
-            clusters[u['title']].append(u['id'])
-        else:
-            clusters.update({u['title']: [u['id']]})
-
-    couples = set()
-    for c in clusters.keys():
-        if len(clusters[c]) > 1:
-            for i in clusters[c]:
-                for j in clusters[c]:
-                    if i < j:
-                        couples.add((i, j))
-                    if i > j:
-                        couples.add((j, i))
-
-    return list(couples)
+nonsense = ['|', ',', '-', ':', '/', '+', '&']
 
 
 def block_x2(dataset: pd.DataFrame):
@@ -242,72 +53,72 @@ def block_x2(dataset: pd.DataFrame):
         product_type = row['type']
         model = row['model']
         item_code = row['item_code']
-        title = row['name']
+        name = row['name']
+        debris = set([it for it in name.split() if it not in nonsense])
 
         if product_type == '0' and brand == "intenso" and model in model_2_type.keys():
             product_type = model_2_type[model]
 
         if capacity in ('256gb', '512gb', '1tb', '2tb') and brand not in ('samsung', 'sandisk'):
-            buckets[f'{brand}.{capacity}'].append(instance_id)
+            buckets[f'{brand}.{capacity}'].append((instance_id, debris))
             continue
 
-        # if brand == 'lexar':
-        #     if capacity != '0' and product_type != '0' and mem_type != '0':
-        #         buckets[f'{brand}.{capacity}.{mem_type}.{product_type}'].append(instance_id)
-        #     else:
-        #         unidentified.append((instance_id, title))
-        # elif brand == 'sony':
-        #     if (mem_type in ('ssd', 'microsd') or capacity == '1tb') and capacity != '0':
-        #         buckets[f'{brand}.{capacity}.{mem_type}'].append(instance_id)
-        #     elif mem_type != '0' and capacity != '0' and product_type != '0':
-        #         buckets[f'{brand}.{capacity}.{mem_type}.{product_type}'].append(instance_id)
-        #     else:
-        #         unidentified.append((instance_id, title))
-        # el
-        if brand == 'sandisk':
-            if capacity != '0' and mem_type != '0':
-                buckets[f'{brand}.{capacity}.{mem_type}.{model}'].append(instance_id)
+        if brand == 'lexar':
+            if capacity != '0' and product_type != '0' and mem_type != '0':
+                buckets[f'{brand}.{capacity}.{mem_type}.{product_type}'].append((instance_id, debris))
             else:
-                unidentified.append((instance_id, title))
-        # elif brand == 'pny':
-        #     if capacity != '0' and mem_type != '0':
-        #         buckets[f'{brand}.{capacity}.{mem_type}'].append(instance_id)
-        #     else:
-        #         unidentified.append((instance_id, title))
-        # elif brand == 'intenso':
-        #     if capacity != '0' and product_type != '0':
-        #         buckets[f'{brand}.{capacity}.{product_type}'].append(instance_id)
-        #     else:
-        #         unidentified.append((instance_id, title))
-        # elif brand == 'kingston':
-        #     if mem_type != '0' and capacity != '0':
-        #         buckets[f'{brand}.{capacity}.{mem_type}'].append(instance_id)
-        #     else:
-        #         unidentified.append((instance_id, title))
-        # elif brand == 'samsung':
-        #     if mem_type in ('microsd', 'ssd', 'sd', 'usb') and capacity != '0' and model != '0':
-        #         buckets[f'{brand}.{capacity}.{mem_type}.{model}'].append(instance_id)
-        #     elif mem_type != '0' and capacity != '0' and product_type != '0' and model != '0':
-        #         buckets[f'{brand}.{capacity}.{mem_type}.{product_type}.{model}'].append(instance_id)
-        #     else:
-        #         unidentified.append((instance_id, title))
-        # elif brand == 'toshiba':
-        #     if capacity != '0' and mem_type != '0' and model != '0':
-        #         buckets[f'{brand}.{capacity}.{model}.{mem_type}'].append(instance_id)
-        #     elif capacity != '0' and mem_type != '0' and product_type != '0':
-        #         buckets[f'{brand}.{capacity}.{product_type}.{mem_type}'].append(instance_id)
-        #     else:
-        #         unidentified.append((instance_id, title))
-        # elif brand == 'transcend':
-        #     if capacity != '0' and mem_type != '0':
-        #         buckets[f'{brand}.{capacity}.{mem_type}'].append(instance_id)
-        #     else:
-        #         unidentified.append((instance_id, title))
-        # else:
-        #     if brand != '0' and capacity != '0' and mem_type != '0':
-        #         buckets[f'{brand}.{capacity}.{mem_type}'].append(instance_id)
-        #     else:
-        #         unidentified.append((instance_id, title))
+                unidentified.append((instance_id, name))
+        elif brand == 'sony':
+            if (mem_type in ('ssd', 'microsd') or capacity == '1tb') and capacity != '0':
+                buckets[f'{brand}.{capacity}.{mem_type}'].append((instance_id, debris))
+            elif mem_type != '0' and capacity != '0' and product_type != '0':
+                buckets[f'{brand}.{capacity}.{mem_type}.{product_type}'].append((instance_id, debris))
+            else:
+                unidentified.append((instance_id, name))
+        elif brand == 'sandisk':
+            if capacity != '0' and mem_type != '0':
+                buckets[f'{brand}.{capacity}.{mem_type}.{model}'].append((instance_id, debris))
+            else:
+                unidentified.append((instance_id, name))
+        elif brand == 'pny':
+            if capacity != '0' and mem_type != '0':
+                buckets[f'{brand}.{capacity}.{mem_type}'].append((instance_id, debris))
+            else:
+                unidentified.append((instance_id, name))
+        elif brand == 'intenso':
+            if capacity != '0' and product_type != '0':
+                buckets[f'{brand}.{capacity}.{product_type}'].append((instance_id, debris))
+            else:
+                unidentified.append((instance_id, name))
+        elif brand == 'kingston':
+            if mem_type != '0' and capacity != '0':
+                buckets[f'{brand}.{capacity}.{mem_type}'].append((instance_id, debris))
+            else:
+                unidentified.append((instance_id, name))
+        elif brand == 'samsung':
+            if mem_type in ('microsd', 'ssd', 'sd', 'usb') and capacity != '0' and model != '0':
+                buckets[f'{brand}.{capacity}.{mem_type}.{model}'].append((instance_id, debris))
+            elif mem_type != '0' and capacity != '0' and product_type != '0' and model != '0':
+                buckets[f'{brand}.{capacity}.{mem_type}.{product_type}.{model}'].append((instance_id, debris))
+            else:
+                unidentified.append((instance_id, name))
+        elif brand == 'toshiba':
+            if capacity != '0' and mem_type != '0' and model != '0':
+                buckets[f'{brand}.{capacity}.{model}.{mem_type}'].append((instance_id, debris))
+            elif capacity != '0' and mem_type != '0' and product_type != '0':
+                buckets[f'{brand}.{capacity}.{product_type}.{mem_type}'].append((instance_id, debris))
+            else:
+                unidentified.append((instance_id, name))
+        elif brand == 'transcend':
+            if capacity != '0' and mem_type != '0':
+                buckets[f'{brand}.{capacity}.{mem_type}'].append((instance_id, debris))
+            else:
+                unidentified.append((instance_id, name))
+        else:
+            if brand != '0' and capacity != '0' and mem_type != '0':
+                buckets[f'{brand}.{capacity}.{mem_type}'].append((instance_id, debris))
+            else:
+                unidentified.append((instance_id, name))
 
     # solved_classes = set()
     # for s in solved_spec:
@@ -411,17 +222,17 @@ def block_x2(dataset: pd.DataFrame):
     #     else:
     #         clusters.update({u['title']: [u['id']]})
 
-    print('unidentified size: ', len(unidentified), flush=True)
+    # print('unidentified size: ', len(unidentified))
 
     candidates = []
     for key in buckets.keys():
         bucket = buckets[key]
         for i in range(len(bucket)):
+            debris = bucket[i][1]
             for j in range(i + 1, len(bucket)):
-                if bucket[i] < bucket[j]:
-                    candidates.append((bucket[i], bucket[j]))
-                elif bucket[i] > bucket[j]:
-                    candidates.append((bucket[j], bucket[i]))
-            if len(candidates) > 2000000:
-                return candidates
+                if len(debris.intersection(bucket[j][1])) / max(len(debris), len(bucket[j][1])) >= 0.5:
+                    if bucket[i][0] < bucket[j][0]:
+                        candidates.append((bucket[i][0], bucket[j][0]))
+                    elif bucket[i][0] > bucket[j][0]:
+                        candidates.append((bucket[j][0], bucket[i][0]))
     return candidates

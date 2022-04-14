@@ -1,7 +1,6 @@
 import pandas as pd
-from FeatureExtracting import extract_x1, extract_x2
-from EntityBlocking import block_x1, block_x2
-from BucketBlocking import bucket_blocking
+from FeatureExtracting import extract_x2
+from EntityBlocking import block_x2
 import time
 from typing import *
 
@@ -67,6 +66,9 @@ if __name__ == '__main__':
     features = extract_x2(features)
     candidates_x2 = block_x2(features)
     candidates_x1 = []
-    save_output(candidates_x1, 1000000, candidates_x2, 2000000)
-    # gnd_truth = pd.read_csv('Y2.csv')
-    # cal_recall(features, gnd_truth)
+    # save_output(candidates_x1, 1000000, candidates_x2, 2000000)
+    output_df = pd.DataFrame(candidates_x2, columns=['left_instance_id', 'right_instance_id'])
+    output_df.to_csv('output.csv', index=False)
+
+    gnd_truth = pd.read_csv('Y2.csv')
+    cal_recall(features, gnd_truth)
