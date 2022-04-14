@@ -281,7 +281,7 @@ def extract_x2(data: pd.DataFrame) -> pd.DataFrame:
 
          if the value can't extract from the information given, '0' will be filled.
     """
-    brands = ['sandisk', 'lexar', 'kingston', 'intenso', 'toshiba', 'sony', 'pny', 'samsung', '']
+    brands = ['sandisk', 'lexar', 'kingston', 'intenso', 'toshiba', 'sony', 'pny', 'samsung']
     families = {'sandisk': ['extreme', 'cruzer', 'ultra', 'traveler', 'sdhc', 'usb', 'adapt'],
                 'lexar': ['ultra', 'jumpdrive'],
                 'toshiba': ['exceria', 'traveler', 'sdhc'],
