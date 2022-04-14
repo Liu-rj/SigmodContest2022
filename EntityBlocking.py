@@ -230,7 +230,7 @@ def block_x2(dataset: pd.DataFrame):
         for i in range(len(bucket)):
             debris = bucket[i][1]
             for j in range(i + 1, len(bucket)):
-                if len(debris.intersection(bucket[j][1])) / max(len(debris), len(bucket[j][1])) >= 0.5:
+                if len(debris.intersection(bucket[j][1])) / max(len(debris), len(bucket[j][1])) >= 0.6:
                     if bucket[i][0] < bucket[j][0]:
                         candidates.append((bucket[i][0], bucket[j][0]))
                     elif bucket[i][0] > bucket[j][0]:
