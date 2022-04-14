@@ -268,11 +268,11 @@ def block_x2(dataset: pd.DataFrame):
                 put_into_buckets(buckets, brand + capacity + mem_type + product_type, instance_id)
             else:
                 unidentified.append((instance_id, title))
-        elif brand == 'sandisk':
-            if capacity != '0' and mem_type != '0':
-                put_into_buckets(buckets, brand + capacity + mem_type + model, instance_id)
-            else:
-                unidentified.append((instance_id, title))
+        # elif brand == 'sandisk':
+        #     if capacity != '0' and mem_type != '0':
+        #         put_into_buckets(buckets, brand + capacity + mem_type + model, instance_id)
+        #     else:
+        #         unidentified.append((instance_id, title))
         elif brand == 'pny':
             if capacity != '0' and mem_type != '0':
                 put_into_buckets(buckets, brand + capacity + mem_type, instance_id)
@@ -307,11 +307,11 @@ def block_x2(dataset: pd.DataFrame):
                 put_into_buckets(buckets, brand + capacity + mem_type, instance_id)
             else:
                 unidentified.append((instance_id, title))
-        else:
-            if brand != '0' and capacity != '0' and mem_type != '0':
-                put_into_buckets(buckets, brand + capacity + mem_type, instance_id)
-            else:
-                unidentified.append((instance_id, title))
+        # else:
+        #     if brand != '0' and capacity != '0' and mem_type != '0':
+        #         put_into_buckets(buckets, brand + capacity + mem_type, instance_id)
+        #     else:
+        #         unidentified.append((instance_id, title))
 
     # solved_classes = set()
     # for s in solved_spec:
