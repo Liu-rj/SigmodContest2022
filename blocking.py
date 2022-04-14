@@ -5,12 +5,12 @@ import re
 
 
 def block_with_attr(X, attr):  # replace with your logic.
-    '''
+    """
     This function performs blocking using attr
     :param X: dataframe
     :param attr: attribute used for blocking
     :return: candidate set of tuple pairs
-    '''
+    """
 
     # build index from patterns to tuples
     pattern2id_1 = defaultdict(list)
