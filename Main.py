@@ -65,6 +65,7 @@ if __name__ == '__main__':
     features['name'] = features.name.str.lower()
     features = extract_x2(features)
     candidates_x2 = block_x2(features)
+    print('candidates size:', len(candidates_x2))
     candidates_x1 = []
     save_output(candidates_x1, 1000000, candidates_x2, 2000000)
     # output_df = pd.DataFrame(candidates_x2, columns=['left_instance_id', 'right_instance_id'])

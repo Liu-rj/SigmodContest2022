@@ -22,16 +22,23 @@ def extract_x2(data: pd.DataFrame) -> pd.DataFrame:
          if the value can't extract from the information given, '0' will be filled.
     """
     brands = ['sandisk', 'lexar', 'kingston', 'intenso', 'toshiba', 'sony', 'pny', 'samsung']
-    series = {'sandisk': ['tarjeta', 'glide', 'select', 'extern', 'origin', 'transmemory', 'react', 'memo', 'karta',
-                          'pendrive', 'carte', 'series', 'line', 'extreme', 'cruzer', 'ultra', 'micro', 'traveler',
-                          'hyperx', 'sd', 'usb', 'adapt'],
-              'lexar': ['ultra', 'jumpdrive'],
-              'toshiba': ['exceria', 'traveler', 'sdhc', 'memoria'],
-              'kingston': ['traveler'],
-              'sony': ['USM32GQX'],
-              'intenso': ['cs/ultra', 'premium', 'ultra', 'micro'],
-              'pny': [],
-              'samsung': []
+    series = {'sandisk': ['tarjeta', 'glide', 'select', 'extern', 'origin', 'transmemory', 'react', 'memo', 'kart',
+                          'pendrive', 'car', 'serie', 'line', 'extreme', 'cruzer', 'ultra', 'micro', 'traveler',
+                          'hyperx', 'sd', 'usb', 'adapt', 'wex'],
+              'lexar': ['ultra', 'xqd', 'jumpdrive', 'micro', 'pendrive', 'sd', 'tarjeta', 'jumpdirve', 'usb', 'memo',
+                        'extreme', 'blade', 'car', 'scheda', 'veloc', 'react', 'adapt', 'secure', 'premium', 'wex',
+                        'transmemo', 'alu', 'datatravel', 'canvas', 'flair', 'hyperx', 'cruzer'],
+              'toshiba': ['ultra', 'exceria', 'traveler', 'sdhc', 'memoria', 'xqd', 'line', 'usb', 'exceria',
+                          'transmemo', 'extreme', 'flair', 'micro', 'speicher', 'serie', 'car'],
+              'kingston': ['traveler', 'sd', 'usb', 'car', 'adapt', 'extreme', 'memo', 'micro', 'canvas',
+                           'datatravel', 'hyperx', 'kart', 'blade', 'ultimate'],
+              'sony': ['usm32gqx', 'micro', 'sd', 'usb', 'ultra', 'jumpdrive', 'hyperx', 'memo', 'kart', 'xqd',
+                       'pendrive', 'adapt', 'blade', 'cruzer', 'flair', 'glide'],
+              'intenso': ['cs/ultra', 'premium', 'ultra', 'micro', 'micro', 'line', 'scheda', 'usb', 'sd', 'premium',
+                          'tarjeta', 'kart', 'car', 'transmemo'],
+              'pny': ['attach', 'usb', 'sd', 'micro', 'premium', 'memo'],
+              'samsung': ['galaxy', 'speicher', 'micro', 'usb', 'sd', 'evo', 'ultra', 'extreme', 'memo', 'adapt', 'car',
+                          'kart', 'klasse', 'multi', 'jumpdrive']
               }
 
     intenso_type = ["basic", "rainbow", "high speed", "speed", "premium", "alu", "business", "micro",
@@ -56,6 +63,7 @@ def extract_x2(data: pd.DataFrame) -> pd.DataFrame:
         model = '0'
         item_code = '0'
         series_name = ''
+        series_num = 0
 
         size_model = re.search(r'[0-9]{1,4}[ ]*[gt][bo]', name_info)
         if size_model is not None:
@@ -67,6 +75,7 @@ def extract_x2(data: pd.DataFrame) -> pd.DataFrame:
                 for sn in series[b]:
                     if sn in name_info:
                         series_name += sn
+                        series_num += 1
                 break
 
         mem_model = re.search(r'ssd', name_info)
@@ -383,10 +392,11 @@ def extract_x2(data: pd.DataFrame) -> pd.DataFrame:
             model,
             item_code,
             series_name,
+            series_num,
             name_info
         ])
 
     result = pd.DataFrame(result,
                           columns=['id', 'brand', 'capacity', 'mem_type', 'type', 'model', 'item_code', 'series',
-                                   'name'])
+                                   'ser_num', 'name'])
     return result
