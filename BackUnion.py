@@ -25,11 +25,23 @@ def back_union(gnd) -> List[Set]:
 
 
 if __name__ == '__main__':
+    brands = ['sandisk', 'lexar', 'kingston', 'intenso', 'toshiba', 'sony', 'pny', 'samsung', '']
     X = pd.read_csv('X2.csv')
     Y = pd.read_csv('Y2.csv')
     buckets = back_union(Y)
+    results = []
     for bucket in buckets:
-        print(bucket)
+        contents = []
         for ele in bucket:
-            print(X[X['id'] == ele]['name'].iloc[0])
+            contents.append(X[X['id'] == ele]['name'].iloc[0])
+        for brand in brands:
+            if brand in contents[0].lower():
+                results.append((brand, bucket, contents))
+                break
+    results.sort(key=lambda x: x[0])
+    for result in results:
+        print()
+        print(result[1])
+        for content in result[2]:
+            print(content)
         print()

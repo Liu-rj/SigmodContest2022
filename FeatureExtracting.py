@@ -22,15 +22,15 @@ def extract_x2(data: pd.DataFrame) -> pd.DataFrame:
          if the value can't extract from the information given, '0' will be filled.
     """
     brands = ['sandisk', 'lexar', 'kingston', 'intenso', 'toshiba', 'sony', 'pny', 'samsung']
-    families = {'sandisk': ['extreme', 'cruzer', 'ultra', 'traveler', 'sdhc', 'usb', 'adapt'],
-                'lexar': ['ultra', 'jumpdrive'],
-                'toshiba': ['exceria', 'traveler', 'sdhc'],
-                'kingston': ['traveler'],
-                'sony': ['USM32GQX'],
-                'intenso': ['premium', 'ultra', 'micro'],
-                'pny': [],
-                'samsung': [],
-                '': ['microsdxc']}
+    series = {'sandisk': ['extreme', 'cruzer', 'ultra', 'traveler', 'sdhc', 'usb', 'adapt'],
+              'lexar': ['ultra', 'jumpdrive'],
+              'toshiba': ['exceria', 'traveler', 'sdhc', 'memoria'],
+              'kingston': ['traveler'],
+              'sony': ['USM32GQX'],
+              'intenso': ['cs/ultra', 'premium', 'ultra', 'micro'],
+              'pny': [],
+              'samsung': []
+              }
 
     intenso_type = ["basic", "rainbow", "high speed", "speed", "premium", "alu", "business", "micro",
                     "imobile", "cmobile", "mini", "ultra", "slim", "flash", "mobile"]
@@ -53,6 +53,7 @@ def extract_x2(data: pd.DataFrame) -> pd.DataFrame:
         product_type = '0'
         model = '0'
         item_code = '0'
+        series_name = '0'
 
         size_model = re.search(r'[0-9]{1,4}[ ]*[gt][bo]', name_info)
         if size_model is not None:
@@ -61,6 +62,10 @@ def extract_x2(data: pd.DataFrame) -> pd.DataFrame:
         for b in brands:
             if b in name_info:
                 brand = b
+                for sn in series[b]:
+                    if sn in name_info:
+                        series_name = sn
+                        break
                 break
 
         mem_model = re.search(r'ssd', name_info)
@@ -376,8 +381,11 @@ def extract_x2(data: pd.DataFrame) -> pd.DataFrame:
             product_type,
             model,
             item_code,
+            series_name,
             name_info
         ])
 
-    result = pd.DataFrame(result, columns=['id', 'brand', 'capacity', 'mem_type', 'type', 'model', 'item_code', 'name'])
+    result = pd.DataFrame(result,
+                          columns=['id', 'brand', 'capacity', 'mem_type', 'type', 'model', 'item_code', 'series',
+                                   'name'])
     return result

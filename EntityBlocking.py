@@ -54,69 +54,69 @@ def block_x2(dataset: pd.DataFrame):
         model = row['model']
         item_code = row['item_code']
         name = row['name']
-        debris = set([it for it in name.split() if it not in nonsense])
+        series = row['series']
 
         if product_type == '0' and brand == "intenso" and model in model_2_type.keys():
             product_type = model_2_type[model]
 
         if capacity in ('256gb', '512gb', '1tb', '2tb') and brand not in ('samsung', 'sandisk'):
-            buckets[f'{brand}.{capacity}'].append((instance_id, debris))
+            buckets[f'{brand}.{capacity}'].append((instance_id, name))
             continue
 
         if brand == 'lexar':
             if capacity != '0' and product_type != '0' and mem_type != '0':
-                buckets[f'{brand}.{capacity}.{mem_type}.{product_type}'].append((instance_id, debris))
+                buckets[f'{brand}.{capacity}.{mem_type}.{product_type}.{series}'].append((instance_id, name))
             else:
                 unidentified.append((instance_id, name))
         elif brand == 'sony':
             if (mem_type in ('ssd', 'microsd') or capacity == '1tb') and capacity != '0':
-                buckets[f'{brand}.{capacity}.{mem_type}'].append((instance_id, debris))
+                buckets[f'{brand}.{capacity}.{mem_type}.{series}'].append((instance_id, name))
             elif mem_type != '0' and capacity != '0' and product_type != '0':
-                buckets[f'{brand}.{capacity}.{mem_type}.{product_type}'].append((instance_id, debris))
+                buckets[f'{brand}.{capacity}.{mem_type}.{product_type}.{series}'].append((instance_id, name))
             else:
                 unidentified.append((instance_id, name))
         elif brand == 'sandisk':
             if capacity != '0' and mem_type != '0':
-                buckets[f'{brand}.{capacity}.{mem_type}.{model}'].append((instance_id, debris))
+                buckets[f'{brand}.{capacity}.{mem_type}.{model}.{series}'].append((instance_id, name))
             else:
                 unidentified.append((instance_id, name))
         elif brand == 'pny':
             if capacity != '0' and mem_type != '0':
-                buckets[f'{brand}.{capacity}.{mem_type}'].append((instance_id, debris))
+                buckets[f'{brand}.{capacity}.{mem_type}.{series}'].append((instance_id, name))
             else:
                 unidentified.append((instance_id, name))
         elif brand == 'intenso':
             if capacity != '0' and product_type != '0':
-                buckets[f'{brand}.{capacity}.{product_type}'].append((instance_id, debris))
+                buckets[f'{brand}.{capacity}.{product_type}.{series}'].append((instance_id, name))
             else:
                 unidentified.append((instance_id, name))
         elif brand == 'kingston':
             if mem_type != '0' and capacity != '0':
-                buckets[f'{brand}.{capacity}.{mem_type}'].append((instance_id, debris))
+                buckets[f'{brand}.{capacity}.{mem_type}.{series}'].append((instance_id, name))
             else:
                 unidentified.append((instance_id, name))
         elif brand == 'samsung':
             if mem_type in ('microsd', 'ssd', 'sd', 'usb') and capacity != '0' and model != '0':
-                buckets[f'{brand}.{capacity}.{mem_type}.{model}'].append((instance_id, debris))
+                buckets[f'{brand}.{capacity}.{mem_type}.{model}.{series}'].append((instance_id, name))
             elif mem_type != '0' and capacity != '0' and product_type != '0' and model != '0':
-                buckets[f'{brand}.{capacity}.{mem_type}.{product_type}.{model}'].append((instance_id, debris))
+                buckets[f'{brand}.{capacity}.{mem_type}.{product_type}.{model}.{series}'].append((instance_id, name))
             else:
                 unidentified.append((instance_id, name))
         elif brand == 'toshiba':
             if capacity != '0' and mem_type != '0' and model != '0':
-                buckets[f'{brand}.{capacity}.{model}.{mem_type}'].append((instance_id, debris))
+                buckets[f'{brand}.{capacity}.{model}.{mem_type}.{series}'].append((instance_id, name))
             elif capacity != '0' and mem_type != '0' and product_type != '0':
-                buckets[f'{brand}.{capacity}.{product_type}.{mem_type}'].append((instance_id, debris))
+                buckets[f'{brand}.{capacity}.{product_type}.{mem_type}.{series}'].append((instance_id, name))
             else:
                 unidentified.append((instance_id, name))
         elif brand == 'transcend':
             if capacity != '0' and mem_type != '0':
-                buckets[f'{brand}.{capacity}.{mem_type}'].append((instance_id, debris))
+                buckets[f'{brand}.{capacity}.{mem_type}.{series}'].append((instance_id, name))
             else:
                 unidentified.append((instance_id, name))
         else:
             if brand != '0' and capacity != '0' and mem_type != '0':
-                buckets[f'{brand}.{capacity}.{mem_type}'].append((instance_id, debris))
+                buckets[f'{brand}.{capacity}.{mem_type}.{series}'].append((instance_id, name))
             else:
                 unidentified.append((instance_id, name))
 
@@ -224,19 +224,13 @@ def block_x2(dataset: pd.DataFrame):
 
     # print('unidentified size: ', len(unidentified))
 
-    jaccard_similarities = []
     candidates = []
     for key in buckets.keys():
         bucket = buckets[key]
         for i in range(len(bucket)):
-            debris = bucket[i][1]
             for j in range(i + 1, len(bucket)):
-                jaccard = len(debris.intersection(bucket[j][1])) / max(len(debris), len(bucket[j][1]))
-                if jaccard >= 0.5:
-                    jaccard_similarities.append(jaccard)
-                    if bucket[i][0] < bucket[j][0]:
-                        candidates.append((bucket[i][0], bucket[j][0]))
-                    elif bucket[i][0] > bucket[j][0]:
-                        candidates.append((bucket[j][0], bucket[i][0]))
-    candidates = [x for _, x in sorted(zip(jaccard_similarities, candidates), reverse=True)]
+                if bucket[i][0] < bucket[j][0]:
+                    candidates.append((bucket[i][0], bucket[j][0]))
+                elif bucket[i][0] > bucket[j][0]:
+                    candidates.append((bucket[j][0], bucket[i][0]))
     return candidates

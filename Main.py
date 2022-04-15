@@ -70,5 +70,5 @@ if __name__ == '__main__':
     # output_df = pd.DataFrame(candidates_x2, columns=['left_instance_id', 'right_instance_id'])
     # output_df.to_csv('output.csv', index=False)
 
-    gnd_truth = pd.read_csv('Y2.csv')
-    cal_recall(features, gnd_truth)
+    # gnd_truth = pd.read_csv('Y2.csv')
+    # cal_recall(features, gnd_truth)
