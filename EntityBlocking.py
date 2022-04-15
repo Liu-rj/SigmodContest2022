@@ -224,15 +224,19 @@ def block_x2(dataset: pd.DataFrame):
 
     # print('unidentified size: ', len(unidentified))
 
+    jaccard_similarities = []
     candidates = []
     for key in buckets.keys():
         bucket = buckets[key]
         for i in range(len(bucket)):
             debris = bucket[i][1]
             for j in range(i + 1, len(bucket)):
-                if len(debris.intersection(bucket[j][1])) / max(len(debris), len(bucket[j][1])) >= 0.8:
+                jaccard = len(debris.intersection(bucket[j][1])) / max(len(debris), len(bucket[j][1]))
+                if jaccard >= 0.5:
+                    jaccard_similarities.append(jaccard)
                     if bucket[i][0] < bucket[j][0]:
                         candidates.append((bucket[i][0], bucket[j][0]))
                     elif bucket[i][0] > bucket[j][0]:
                         candidates.append((bucket[j][0], bucket[i][0]))
+    candidates = [x for _, x in sorted(zip(jaccard_similarities, candidates), reverse=True)]
     return candidates
