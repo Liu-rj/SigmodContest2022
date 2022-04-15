@@ -22,7 +22,9 @@ def extract_x2(data: pd.DataFrame) -> pd.DataFrame:
          if the value can't extract from the information given, '0' will be filled.
     """
     brands = ['sandisk', 'lexar', 'kingston', 'intenso', 'toshiba', 'sony', 'pny', 'samsung']
-    series = {'sandisk': ['extreme', 'cruzer', 'ultra', 'traveler', 'sdhc', 'usb', 'adapt'],
+    series = {'sandisk': ['tarjeta', 'glide', 'select', 'extern', 'origin', 'transmemory', 'react', 'memo', 'karta',
+                          'pendrive', 'carte', 'series', 'line', 'extreme', 'cruzer', 'ultra', 'micro', 'traveler',
+                          'hyperx', 'sd', 'usb', 'adapt'],
               'lexar': ['ultra', 'jumpdrive'],
               'toshiba': ['exceria', 'traveler', 'sdhc', 'memoria'],
               'kingston': ['traveler'],
@@ -53,7 +55,7 @@ def extract_x2(data: pd.DataFrame) -> pd.DataFrame:
         product_type = '0'
         model = '0'
         item_code = '0'
-        series_name = '0'
+        series_name = ''
 
         size_model = re.search(r'[0-9]{1,4}[ ]*[gt][bo]', name_info)
         if size_model is not None:
@@ -64,8 +66,7 @@ def extract_x2(data: pd.DataFrame) -> pd.DataFrame:
                 brand = b
                 for sn in series[b]:
                     if sn in name_info:
-                        series_name = sn
-                        break
+                        series_name += sn
                 break
 
         mem_model = re.search(r'ssd', name_info)
