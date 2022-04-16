@@ -1,71 +1,18 @@
-import pandas as pd
-from FeatureExtracting import extract_x2
-from EntityBlocking import block_x2
+import csv
+
+# from handler import handle
 from collections import defaultdict
-import re
 from tqdm import tqdm
-import time
-from typing import *
+import pandas as pd
+import re
+
+Flag = True
 
 
-def cal_recall(data, gnd):
-    predict_pd = pd.read_csv('output.csv')
-    gnd['cnt'] = 0
-    predict = predict_pd.values.tolist()
-    for idx in range(len(predict)):
-        if predict[idx][0] == 0:
-            continue
-        index = gnd[(gnd['lid'] == predict[idx][0]) & (gnd['rid'] == predict[idx][1])].index.tolist()
-        if len(index) > 0:
-            gnd['cnt'][index[0]] += 1
-        if len(index) > 1:
-            raise Exception
-    print(sum(gnd['cnt']))
-    print(sum(gnd['cnt']) / gnd.values.shape[0])
-    # print that are uncovered
-    # left = gnd[gnd['cnt'] == 0].reset_index()
-    # for idx in range(left.shape[0]):
-    #     print(left['lid'][idx], ',', left['rid'][idx])
-    #     print(data[data['id'] == left['lid'][idx]]['title'].iloc[0])
-    #     print(data[data['id'] == left['rid'][idx]]['title'].iloc[0])
-    #     print()
-
-
-def gen_candidates(buckets) -> []:
-    candidates_pair = []
-    for bucket in buckets:
-        if len(bucket[1]) <= 1:
-            continue
-        for idx_1 in range(len(bucket[1])):
-            for idx_2 in range(idx_1 + 1, len(bucket[1])):
-                if bucket[1][idx_1] < bucket[1][idx_2]:
-                    candidates_pair.append((bucket[1][idx_1], bucket[1][idx_2]))
-                else:
-                    candidates_pair.append((bucket[1][idx_2], bucket[1][idx_1]))
-    return candidates_pair
-
-
-def save_output(pairs_x1, expected_size_x1, pairs_x2, expected_size_x2):
-    if len(pairs_x1) > expected_size_x1:
-        pairs_x1 = pairs_x1[:expected_size_x1]
-    elif len(pairs_x1) < expected_size_x1:
-        pairs_x1.extend([(0, 0)] * (expected_size_x1 - len(pairs_x1)))
-    if len(pairs_x2) > expected_size_x2:
-        pairs_x2 = pairs_x2[:expected_size_x2]
-    elif len(pairs_x2) < expected_size_x2:
-        pairs_x2.extend([(0, 0)] * (expected_size_x2 - len(pairs_x2)))
-    output = pairs_x1 + pairs_x2
-    output_df = pd.DataFrame(output, columns=['left_instance_id', 'right_instance_id'])
-    output_df.to_csv('output.csv', index=False)
-
-
-brands_x1 = ['dell', 'lenovo', 'acer', 'asus', 'hp', 'panasonic', 'toshiba', 'sony', 'epson']
-
-
-def block_with_attr(data, attr):  # replace with your logic.
+def block_with_attr(X, attr):  # replace with your logic.
     """
     This function performs blocking using attr
-    :param data: dataframe
+    :param X: dataframe
     :param attr: attribute used for blocking
     :return: candidate set of tuple pairs
     """
@@ -75,8 +22,8 @@ def block_with_attr(data, attr):  # replace with your logic.
     pattern2id_2 = defaultdict(list)
     pattern2id_3 = defaultdict(list)
     pattern2id_4 = defaultdict(list)
-    for i in tqdm(range(data.shape[0])):
-        attr_i = str(data[attr][i])
+    for i in tqdm(range(X.shape[0])):
+        attr_i = str(X[attr][i])
         pattern_1 = " ".join(sorted(attr_i.lower().split()))  # use the whole attribute as the pattern
         pattern2id_1[pattern_1].append(i)
 
@@ -154,18 +101,16 @@ def block_with_attr(data, attr):  # replace with your logic.
         id1, id2 = it
 
         # get real ids
-        real_id1 = data['id'][id1]
-        real_id2 = data['id'][id2]
-        # NOTE: This is to make sure in the final output.csv, for a pair id1 and id2 (assume id1<id2),
-        # we only include (id1,id2) but not (id2, id1)
-        if real_id1 < real_id2:
+        real_id1 = X['id'][id1]
+        real_id2 = X['id'][id2]
+        if real_id1 < real_id2:  # NOTE: This is to make sure in the final output.csv, for a pair id1 and id2 (assume id1<id2), we only include (id1,id2) but not (id2, id1)
             candidate_pairs_real_ids.append((real_id1, real_id2))
         else:
             candidate_pairs_real_ids.append((real_id2, real_id1))
 
         # compute jaccard similarity
-        name1 = str(data[attr][id1])
-        name2 = str(data[attr][id2])
+        name1 = str(X[attr][id1])
+        name2 = str(X[attr][id2])
         s1 = set(name1.lower().split())
         s2 = set(name2.lower().split())
         jaccard_similarities.append(len(s1.intersection(s2)) / max(len(s1), len(s2)))
@@ -173,17 +118,59 @@ def block_with_attr(data, attr):  # replace with your logic.
     return candidate_pairs_real_ids
 
 
-if __name__ == '__main__':
-    features = pd.read_csv('X1.csv')
-    features = pd.read_csv('X2.csv')
-    candidates_x2 = block_with_attr(features, attr='name')
-    # features['name'] = features.name.str.lower()
-    # features = extract_x2(features)
-    # candidates_x2 = block_x2(features)
-    candidates_x1 = []
-    # save_output(candidates_x1, 1000000, candidates_x2, 2000000)
-    output_df = pd.DataFrame(candidates_x2, columns=['left_instance_id', 'right_instance_id'])
-    output_df.to_csv('output.csv', index=False)
+def save_output(X1_candidate_pairs,
+                X2_candidate_pairs):  # save the candset for both datasets to a SINGLE file output.csv
+    expected_cand_size_X1 = 1000000
+    expected_cand_size_X2 = 2000000
 
-    # gnd_truth = pd.read_csv('Y2.csv')
-    # cal_recall(features, gnd_truth)
+    # make sure to include exactly 1000000 pairs for dataset X1 and 2000000 pairs for dataset X2
+    if len(X1_candidate_pairs) > expected_cand_size_X1:
+        X1_candidate_pairs = X1_candidate_pairs[:expected_cand_size_X1]
+    if len(X2_candidate_pairs) > expected_cand_size_X2:
+        X2_candidate_pairs = X2_candidate_pairs[:expected_cand_size_X2]
+
+    # make sure to include exactly 1000000 pairs for dataset X1 and 2000000 pairs for dataset X2
+    # if len(X1_candidate_pairs) < expected_cand_size_X1:
+    #     print( len(X1_candidate_pairs))
+    #     X1_candidate_pairs.extend([(0, 0)] * (expected_cand_size_X1 - len(X1_candidate_pairs)))
+    # if len(X2_candidate_pairs) < expected_cand_size_X2:
+    #     print( len(X2_candidate_pairs))
+    #     X2_candidate_pairs.extend([(0, 0)] * (expected_cand_size_X2 - len(X2_candidate_pairs)))
+
+    all_cand_pairs = X1_candidate_pairs + X2_candidate_pairs  # make sure to have the pairs in the first dataset first
+    output_df = pd.DataFrame(all_cand_pairs, columns=["left_instance_id", "right_instance_id"])
+    # In evaluation, we expect output.csv to include exactly 3000000 tuple pairs.
+    # we expect the first 1000000 pairs are for dataset X1, and the remaining pairs are for dataset X2
+    output_df.to_csv("output.csv", index=False)
+
+
+if __name__ == '__main__':
+    X1_candidate_pairs = []
+    X2_candidate_pairs = []
+    for file_name in ['X1.csv', 'X2.csv']:
+        if file_name == "X1.csv":
+            X1 = pd.read_csv("X1.csv")
+            X1_candidate_pairs = block_with_attr(X1, attr="title")
+            # data = pd.read_csv(file_name)
+            # X1_candidate_pairs = handle(data).values.tolist()
+        else:
+            # read the datasets
+            X2 = pd.read_csv("X2.csv")
+            # perform blocking
+            X2_candidate_pairs = block_with_attr(X2, attr="name")
+
+            # save results
+        save_output(X1_candidate_pairs, X2_candidate_pairs)
+        # if Flag:
+        #         output.to_csv("Y1.csv", sep=',', encoding='utf-8', index=False)
+        #         Flag = False
+
+#     #calculate
+#     with open('Y2.csv', 'r') as csv1, open('output.csv', 'r') as csv2:
+#         import1 = csv1.readlines()
+#         import2 = csv2.readlines()
+#         same = 0
+#         for row in import2:
+#             if row in import1:
+#                 same = same + 1
+#         print(same / len(import1))
