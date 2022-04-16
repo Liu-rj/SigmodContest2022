@@ -33,9 +33,9 @@ if __name__ == '__main__':
     for bucket in buckets:
         contents = []
         for ele in bucket:
-            contents.append(X[X['id'] == ele]['name'].iloc[0])
+            contents.append((X[X['id'] == ele]['name'].iloc[0], X[X['id'] == ele]['price'].iloc[0]))
         for brand in brands:
-            if brand in contents[0].lower():
+            if brand in contents[0][0].lower():
                 results.append((brand, bucket, contents))
                 break
     results.sort(key=lambda x: x[0])
@@ -43,5 +43,5 @@ if __name__ == '__main__':
         print()
         print(result[1])
         for content in result[2]:
-            print(content)
+            print(content[0], content[1])
         print()
