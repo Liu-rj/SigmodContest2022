@@ -53,72 +53,113 @@ def block_x2(dataset: pd.DataFrame):
         product_type = row['type']
         model = row['model']
         item_code = row['item_code']
+        # name = ' '.join(sorted(row['name'].split()))
         name = row['name']
         series = row['series']
-        series_num = row['ser_num']
+        pat_hb = row['pat_hb']
 
-        if capacity == '0' or brand == '0':
-            unidentified.append((instance_id, name))
-            continue
+        # TODO: usb is wrongly recognized as microsd
+        key = name
+        if brand != '0':
+            key = f'{brand}.{mem_type}.{capacity}.{model}.{product_type}'
+            if capacity == '0' and model == '0' and product_type == '0':
+                key = f'{brand}.{mem_type}.{series}'
+            # elif model == '0' and product_type == '0':
+            #     key = f'{brand}.{mem_type}.{capacity}'
+            # if series != '0' and pat_hb != '0':
+            #     key = f'{brand}.{capacity}.{mem_type}.{product_type}.{model}.{series}.{pat_hb}'
+            # elif series != '0':
+            #     key = f'{brand}.{capacity}.{mem_type}.{product_type}.{model}.{series}'
+            # elif pat_hb != '0':
+            #     key = f'{brand}.{capacity}.{mem_type}.{product_type}.{model}.{pat_hb}'
+        buckets[key].append((instance_id, name))
 
-        if product_type == '0' and brand == "intenso" and model in model_2_type.keys():
-            product_type = model_2_type[model]
+        # if product_type == '0' and model == '0':
+        #     unidentified.append((instance_id, name))
+        #     continue
+
+        # if product_type == '0' and brand == "intenso" and model in model_2_type.keys():
+        #     product_type = model_2_type[model]
 
         # if capacity in ('256gb', '512gb', '1tb', '2tb') and brand not in ('samsung', 'sandisk'):
         #     buckets[f'{brand}.{capacity}'].append((instance_id, name))
         #     continue
 
-        if brand == 'lexar':
-            if product_type != '0' and mem_type != '0':
-                buckets[f'{brand}.{capacity}.{mem_type}.{product_type}.{series}'].append((instance_id, name))
-            else:
-                unidentified.append((instance_id, name))
-        elif brand == 'sony':
-            if mem_type in ('ssd', 'microsd') or capacity == '1tb':
-                buckets[f'{brand}.{capacity}.{mem_type}.{series}'].append((instance_id, name))
-            elif mem_type != '0' and product_type != '0':
-                buckets[f'{brand}.{capacity}.{mem_type}.{product_type}.{series}'].append((instance_id, name))
-            else:
-                unidentified.append((instance_id, name))
-        elif brand == 'sandisk':
-            if mem_type != '0':
-                buckets[f'{brand}.{capacity}.{mem_type}.{model}.{series}'].append((instance_id, name))
-            else:
-                unidentified.append((instance_id, name))
-        elif brand == 'pny':
-            if mem_type != '0':
-                buckets[f'{brand}.{capacity}.{mem_type}.{series}'].append((instance_id, name))
-            else:
-                unidentified.append((instance_id, name))
-        elif brand == 'intenso':
-            if product_type != '0':
-                buckets[f'{brand}.{capacity}.{product_type}.{series}'].append((instance_id, name))
-            else:
-                unidentified.append((instance_id, name))
-        elif brand == 'kingston':
-            if mem_type != '0':
-                buckets[f'{brand}.{capacity}.{mem_type}.{series}'].append((instance_id, name))
-            else:
-                unidentified.append((instance_id, name))
-        elif brand == 'samsung':
-            if mem_type in ('microsd', 'ssd', 'sd', 'usb') and model != '0':
-                buckets[f'{brand}.{capacity}.{mem_type}.{model}.{series}'].append((instance_id, name))
-            elif mem_type != '0' and product_type != '0' and model != '0':
-                buckets[f'{brand}.{capacity}.{mem_type}.{product_type}.{model}.{series}'].append((instance_id, name))
-            else:
-                unidentified.append((instance_id, name))
-        elif brand == 'toshiba':
-            if mem_type != '0' and model != '0':
-                buckets[f'{brand}.{capacity}.{model}.{mem_type}.{series}'].append((instance_id, name))
-            elif mem_type != '0' and product_type != '0':
-                buckets[f'{brand}.{capacity}.{product_type}.{mem_type}.{series}'].append((instance_id, name))
-            else:
-                unidentified.append((instance_id, name))
-        elif brand == 'transcend':
-            if mem_type != '0':
-                buckets[f'{brand}.{capacity}.{mem_type}.{series}'].append((instance_id, name))
-            else:
-                unidentified.append((instance_id, name))
+    solved = 0
+    candidates = []
+    jaccard_similarities = []
+    for key in buckets.keys():
+        bucket = buckets[key]
+        # print()
+        # print()
+        # print(key)
+        for i in range(len(bucket)):
+            # print(bucket[i][1])
+            for j in range(i + 1, len(bucket)):
+                solved += 1
+                if bucket[i][0] < bucket[j][0]:
+                    # candidates.append((bucket[i], bucket[j], key))
+                    candidates.append((bucket[i][0], bucket[j][0]))
+                elif bucket[i][0] > bucket[j][0]:
+                    # candidates.append((bucket[j], bucket[i], key))
+                    candidates.append((bucket[j][0], bucket[i][0]))
+                s1 = set(bucket[i][1].split())
+                s2 = set(bucket[j][1].lower().split())
+                jaccard_similarities.append(len(s1.intersection(s2)) / max(len(s1), len(s2)))
+    candidates = [x for _, x in sorted(zip(jaccard_similarities, candidates), reverse=True)]
+    print('output pairs:\t', solved)
+
+        # if brand == 'lexar':
+        #     if product_type != '0' and mem_type != '0':
+        #         buckets[f'{brand}.{capacity}.{mem_type}.{product_type}.{series}'].append((instance_id, name))
+        #     else:
+        #         unidentified.append((instance_id, name))
+        # elif brand == 'sony':
+        #     if mem_type in ('ssd', 'microsd') or capacity == '1tb':
+        #         buckets[f'{brand}.{capacity}.{mem_type}.{series}'].append((instance_id, name))
+        #     elif mem_type != '0' and product_type != '0':
+        #         buckets[f'{brand}.{capacity}.{mem_type}.{product_type}.{series}'].append((instance_id, name))
+        #     else:
+        #         unidentified.append((instance_id, name))
+        # elif brand == 'sandisk':
+        #     if mem_type != '0':
+        #         buckets[f'{brand}.{capacity}.{mem_type}.{model}.{series}'].append((instance_id, name))
+        #     else:
+        #         unidentified.append((instance_id, name))
+        # elif brand == 'pny':
+        #     if mem_type != '0':
+        #         buckets[f'{brand}.{capacity}.{mem_type}.{series}'].append((instance_id, name))
+        #     else:
+        #         unidentified.append((instance_id, name))
+        # elif brand == 'intenso':
+        #     if product_type != '0':
+        #         buckets[f'{brand}.{capacity}.{product_type}.{series}'].append((instance_id, name))
+        #     else:
+        #         unidentified.append((instance_id, name))
+        # elif brand == 'kingston':
+        #     if mem_type != '0':
+        #         buckets[f'{brand}.{capacity}.{mem_type}.{series}'].append((instance_id, name))
+        #     else:
+        #         unidentified.append((instance_id, name))
+        # elif brand == 'samsung':
+        #     if mem_type in ('microsd', 'ssd', 'sd', 'usb') and model != '0':
+        #         buckets[f'{brand}.{capacity}.{mem_type}.{model}.{series}'].append((instance_id, name))
+        #     elif mem_type != '0' and product_type != '0' and model != '0':
+        #         buckets[f'{brand}.{capacity}.{mem_type}.{product_type}.{model}.{series}'].append((instance_id, name))
+        #     else:
+        #         unidentified.append((instance_id, name))
+        # elif brand == 'toshiba':
+        #     if mem_type != '0' and model != '0':
+        #         buckets[f'{brand}.{capacity}.{model}.{mem_type}.{series}'].append((instance_id, name))
+        #     elif mem_type != '0' and product_type != '0':
+        #         buckets[f'{brand}.{capacity}.{product_type}.{mem_type}.{series}'].append((instance_id, name))
+        #     else:
+        #         unidentified.append((instance_id, name))
+        # elif brand == 'transcend':
+        #     if mem_type != '0':
+        #         buckets[f'{brand}.{capacity}.{mem_type}.{series}'].append((instance_id, name))
+        #     else:
+        #         unidentified.append((instance_id, name))
         # else:
         #     if brand != '0' and  and mem_type != '0':
         #         buckets[f'{brand}.{capacity}.{mem_type}.{series}'].append((instance_id, name))
@@ -228,21 +269,4 @@ def block_x2(dataset: pd.DataFrame):
     #         clusters.update({u['title']: [u['id']]})
 
     # print('unidentified size: ', len(unidentified))
-
-    solved = 0
-    candidates = []
-    for key in buckets.keys():
-        bucket = buckets[key]
-        print()
-        print()
-        print(key)
-        for i in range(len(bucket)):
-            print(bucket[i][1])
-            solved += 1
-            for j in range(i + 1, len(bucket)):
-                if bucket[i][0] < bucket[j][0]:
-                    candidates.append((bucket[i][0], bucket[j][0]))
-                elif bucket[i][0] > bucket[j][0]:
-                    candidates.append((bucket[j][0], bucket[i][0]))
-    print('solved instance numbers:', solved)
     return candidates

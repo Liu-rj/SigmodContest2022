@@ -22,24 +22,25 @@ def extract_x2(data: pd.DataFrame) -> pd.DataFrame:
          if the value can't extract from the information given, '0' will be filled.
     """
     brands = ['sandisk', 'lexar', 'kingston', 'intenso', 'toshiba', 'sony', 'pny', 'samsung']
-    series = {'sandisk': ['tarjeta', 'glide', 'select', 'extern', 'origin', 'transmemory', 'react', 'memo', 'kart',
-                          'pendrive', 'car', 'serie', 'line', 'extreme', 'cruzer', 'ultra', 'micro', 'traveler',
-                          'hyperx', 'sd', 'usb', 'adapt', 'wex'],
-              'lexar': ['ultra', 'xqd', 'jumpdrive', 'micro', 'pendrive', 'sd', 'tarjeta', 'jumpdirve', 'usb', 'memo',
-                        'extreme', 'blade', 'car', 'scheda', 'veloc', 'react', 'adapt', 'secure', 'premium', 'wex',
-                        'transmemo', 'alu', 'datatravel', 'canvas', 'flair', 'hyperx', 'cruzer'],
-              'toshiba': ['ultra', 'exceria', 'traveler', 'sdhc', 'memoria', 'xqd', 'line', 'usb', 'exceria',
-                          'transmemo', 'extreme', 'flair', 'micro', 'speicher', 'serie', 'car'],
-              'kingston': ['traveler', 'sd', 'usb', 'car', 'adapt', 'extreme', 'memo', 'micro', 'canvas',
-                           'datatravel', 'hyperx', 'kart', 'blade', 'ultimate'],
-              'sony': ['usm32gqx', 'micro', 'sd', 'usb', 'ultra', 'jumpdrive', 'hyperx', 'memo', 'kart', 'xqd',
-                       'pendrive', 'adapt', 'blade', 'cruzer', 'flair', 'glide'],
-              'intenso': ['cs/ultra', 'premium', 'ultra', 'micro', 'micro', 'line', 'scheda', 'usb', 'sd', 'premium',
-                          'tarjeta', 'kart', 'car', 'transmemo'],
-              'pny': ['attach', 'usb', 'sd', 'micro', 'premium', 'memo'],
-              'samsung': ['galaxy', 'speicher', 'micro', 'usb', 'sd', 'evo', 'ultra', 'extreme', 'memo', 'adapt', 'car',
-                          'kart', 'klasse', 'multi', 'jumpdrive']
-              }
+    families = {'sandisk': ['tarjeta', 'glide', 'select', 'extern', 'origin', 'transmemory', 'react', 'memo', 'kart',
+                            'pendrive', 'car', 'serie', 'line', 'extreme', 'cruzer', 'ultra', 'micro', 'traveler',
+                            'hyperx', 'sd', 'usb', 'adapt', 'wex'],
+                'lexar': ['ultra', 'xqd', 'jumpdrive', 'micro', 'pendrive', 'sd', 'tarjeta', 'jumpdirve', 'usb', 'memo',
+                          'extreme', 'blade', 'car', 'scheda', 'veloc', 'react', 'adapt', 'secure', 'premium', 'wex',
+                          'transmemo', 'alu', 'datatravel', 'canvas', 'flair', 'hyperx', 'cruzer'],
+                'toshiba': ['ultra', 'exceria', 'traveler', 'sdhc', 'memoria', 'xqd', 'line', 'usb', 'exceria',
+                            'transmemo', 'extreme', 'flair', 'micro', 'speicher', 'serie', 'car'],
+                'kingston': ['traveler', 'sd', 'usb', 'car', 'adapt', 'extreme', 'memo', 'micro', 'canvas',
+                             'datatravel', 'hyperx', 'kart', 'blade', 'ultimate'],
+                'sony': ['usm32gqx', 'micro', 'sd', 'usb', 'ultra', 'jumpdrive', 'hyperx', 'memo', 'kart', 'xqd',
+                         'pendrive', 'adapt', 'blade', 'cruzer', 'flair', 'glide'],
+                'intenso': ['cs/ultra', 'premium', 'ultra', 'micro', 'micro', 'line', 'scheda', 'usb', 'sd', 'premium',
+                            'tarjeta', 'kart', 'car', 'transmemo'],
+                'pny': ['attach', 'usb', 'sd', 'micro', 'premium', 'memo'],
+                'samsung': ['galaxy', 'speicher', 'micro', 'usb', 'sd', 'evo', 'ultra', 'extreme', 'memo', 'adapt',
+                            'car',
+                            'kart', 'klasse', 'multi', 'jumpdrive']
+                }
 
     intenso_type = ["basic", "rainbow", "high speed", "speed", "premium", "alu", "business", "micro",
                     "imobile", "cmobile", "mini", "ultra", "slim", "flash", "mobile"]
@@ -56,27 +57,35 @@ def extract_x2(data: pd.DataFrame) -> pd.DataFrame:
     for row in range(data.shape[0]):
         name_info = data['name'][row]
 
-        size = '0'
+        capacity = '0'
         mem_type = '0'
         brand = '0'
         product_type = '0'
         model = '0'
         item_code = '0'
-        series_name = ''
-        series_num = 0
+        series = '0'
+        pat_hb = '0'
 
-        size_model = re.search(r'[0-9]{1,4}[ ]*[gt][bo]', name_info)
-        if size_model is not None:
-            size = size_model.group()[:].replace(' ', '')
+        size_model = re.findall(r'[0-9]{1,4}[ ]*[gt][bo]', name_info)
+        if len(size_model) > 0:
+            capacity = str(size_model[0]).replace(' ', '').replace('b', '').replace('o', '')
 
+        pattern = set()
+        brand_list = set()
         for b in brands:
             if b in name_info:
-                brand = b
-                for sn in series[b]:
+                brand_list.add(b)
+                for sn in families[b]:
                     if sn in name_info:
-                        series_name += sn
-                        series_num += 1
-                break
+                        pattern.add(sn)
+                series = ''.join(sorted(list(pattern)))
+        if len(brand_list) > 0:
+            brand = ''.join(sorted(list(brand_list)))
+
+        pattern = set(re.findall(r'\w+-\w+', name_info))
+        if len(pattern) > 0:
+            pattern = sorted([str(x) for x in pattern])
+            pat_hb = ''.join(pattern)
 
         mem_model = re.search(r'ssd', name_info)
         if mem_model is None:
@@ -105,9 +114,9 @@ def extract_x2(data: pd.DataFrame) -> pd.DataFrame:
         if 'adapt' in name_info and mem_type == '0':
             mem_type = 'microsd'
 
-        item_code_model = re.search(r'\((mk)?[0-9]{6,10}\)', name_info)
-        if item_code_model is not None:
-            item_code = item_code_model.group()[1:-1]
+        # item_code_model = re.search(r'\((mk)?[0-9]{6,10}\)', name_info)
+        # if item_code_model is not None:
+        #     item_code = item_code_model.group()[1:-1]
 
         if brand == "intenso":
             model_model = re.search(r'[0-9]{7}', name_info)
@@ -122,7 +131,6 @@ def extract_x2(data: pd.DataFrame) -> pd.DataFrame:
                     if t in name_info:
                         product_type = t.replace(' ', '')
                         break
-
         elif brand == "lexar":
             type_model = re.search(
                 r'((jd)|[\s])[a-wy-z][0-9]{2}[a-z]?', name_info)
@@ -134,22 +142,19 @@ def extract_x2(data: pd.DataFrame) -> pd.DataFrame:
                 product_type = type_model.group().strip() \
                     .replace('x', '').replace('l', '').replace('j', '').replace('d', '') \
                     .replace('b', '').replace('e', '').replace('u', '')
-
             if mem_type == '0':
                 if 'drive' in name_info:
                     mem_type = 'usb'
             if 'lexar 8gb jumpdrive v10 8gb usb 2.0 tipo-a blu unità flash usb' in name_info:
                 product_type = 'c20c'
-
         elif brand == 'sony':
             if mem_type == '0':
                 if 'ux' in name_info or 'uy' in name_info or 'sr' in name_info:
                     mem_type = 'microsd'
                 elif 'uf' in name_info:
                     mem_type = 'sd'
-                elif 'usm' in name_info or size == '1tb':
+                elif 'usm' in name_info or capacity == '1tb':
                     mem_type = 'usb'
-
             type_model = re.search(r'((sf)|(usm))[-]?[0-9a-z]{1,6}', name_info)
             if type_model is not None:
                 product_type = type_model.group().replace('-', '').replace('g', '')
@@ -174,7 +179,6 @@ def extract_x2(data: pd.DataFrame) -> pd.DataFrame:
                         'g',
                         '')
                     product_type = product_type.replace('series', '').replace('serie', '')
-
         elif brand == 'sandisk':
             model_model = re.search(r'ext.*(\s)?((plus)|(pro)|\+)', name_info)
             if model_model is not None:
@@ -214,7 +218,6 @@ def extract_x2(data: pd.DataFrame) -> pd.DataFrame:
                                         r'double connect.*', name_info)
                                 if model_model is not None:
                                     model = 'ultra'
-
             if 'accessoires montres' in name_info:
                 if 'extreme' in name_info:
                     mem_type = 'microsd'
@@ -231,9 +234,8 @@ def extract_x2(data: pd.DataFrame) -> pd.DataFrame:
                     mem_type = 'usb'
                 elif model in ('glide', 'fit'):
                     mem_type = 'usb'
-            if 'sandisk - ' + size + ' extreme en fnac.es' in name_info:
+            if 'sandisk - ' + capacity + ' extreme en fnac.es' in name_info:
                 mem_type = 'usb'
-
         elif brand == 'pny':
             type_model = re.search(r'att.*?[3-4]', name_info)
             if type_model is not None:
@@ -242,7 +244,6 @@ def extract_x2(data: pd.DataFrame) -> pd.DataFrame:
                                list(filter(lambda ch: ch in '0123456789', product_type))[0]
                 if mem_type == '0':
                     mem_type = 'usb'
-
         elif brand == 'kingston':
             if mem_type == '0':
                 if 'savage' in name_info or 'hx' in name_info or 'hyperx' in name_info:
@@ -264,7 +265,6 @@ def extract_x2(data: pd.DataFrame) -> pd.DataFrame:
                     model = 'data traveler'
             if model == 'data traveler' and mem_type == '0':
                 mem_type = 'usb'
-
         elif brand == 'samsung':
             if 'lte' in name_info:
                 model_model = re.search(
@@ -280,7 +280,7 @@ def extract_x2(data: pd.DataFrame) -> pd.DataFrame:
             elif 'tv' in name_info:
                 size_model = re.search(r'[0-9]{2}[- ]?inch', name_info)
                 if size_model is not None:
-                    size = size_model.group()[:2]
+                    capacity = size_model.group()[:2]
                 mem_model = re.search(r'(hd)|(qled)|(uhd)', name_info)
                 if mem_model is not None:
                     mem_type = mem_model.group()
@@ -305,7 +305,6 @@ def extract_x2(data: pd.DataFrame) -> pd.DataFrame:
                 if c in name_info:
                     product_type = c
                     break
-
         elif brand == 'toshiba':
             model_model = re.search(r'[\s\-n][umn][0-9]{3}', name_info)
             if model_model is not None:
@@ -332,12 +331,12 @@ def extract_x2(data: pd.DataFrame) -> pd.DataFrame:
                     r'exceria[ ]?((high)|(plus)|(pro))?', name_info)
                 if type_model is not None:
                     product_type = type_model.group().replace(' ', '').replace('exceria', 'x')
-                elif size != '0':
+                elif capacity != '0':
                     type_model = re.search(
-                        r'x[ ]?((high)|(plus)|(pro))?' + size[:-2], name_info)
+                        r'x[ ]?((high)|(plus)|(pro))?' + capacity[:-2], name_info)
                     if type_model is not None:
                         product_type = type_model.group().replace(' ', '')[
-                                       :-(len(size) - 2)]
+                                       :-(len(capacity) - 2)]
                 if product_type == 'xpro' and mem_type == '0':
                     mem_type = 'sd'
                 if product_type == 'xhigh' and mem_type == '0':
@@ -379,24 +378,23 @@ def extract_x2(data: pd.DataFrame) -> pd.DataFrame:
                 model = 'ex'
             if model == 'n101':
                 model = '0'
-
         elif brand == 'transcend':
             pass
 
         result.append([
             data['id'][row],
             brand,
-            size,
+            capacity,
             mem_type,
             product_type,
             model,
             item_code,
-            series_name,
-            series_num,
+            series,
+            pat_hb,
             name_info
         ])
 
     result = pd.DataFrame(result,
                           columns=['id', 'brand', 'capacity', 'mem_type', 'type', 'model', 'item_code', 'series',
-                                   'ser_num', 'name'])
+                                   'pat_hb', 'name'])
     return result
