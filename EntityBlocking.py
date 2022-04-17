@@ -6,6 +6,35 @@ from typing import *
 nonsense = ['|', ',', '-', ':', '/', '+', '&']
 
 
+def gen_key_sig(key, pattern1, pattern2):
+    sig = 'low'
+    if pattern1 != '0' and pattern2 != '0':
+        key += f'.{pattern1}.{pattern2}'
+        sig = 'high'
+    elif pattern1 != '0':
+        key += f'.{pattern1}'
+        sig = 'mid'
+    elif pattern2 != '0':
+        key += f'.{pattern2}'
+        sig = 'mid'
+    return key, sig
+
+
+def gen_pair_for_priority(candidates: Set, priority: Dict[str, List], max_size: int):
+    if len(candidates) > max_size:
+        return
+    for key in priority.keys():
+        bucket = priority[key]
+        for i in range(len(bucket)):
+            for j in range(i + 1, len(bucket)):
+                if bucket[i] < bucket[j]:
+                    candidates.add((bucket[i], bucket[j]))
+                elif bucket[i] > bucket[j]:
+                    candidates.add((bucket[j], bucket[i]))
+        if len(candidates) > max_size:
+            return
+
+
 def block_x2(dataset: pd.DataFrame):
     """
     Give an identification for each record according to their cleaned field values
@@ -42,7 +71,9 @@ def block_x2(dataset: pd.DataFrame):
     sony_capacity_single = ["1tb", "256gb"]
     sony_capacity_memtype_type = ["32gb", "4gb"]
 
-    buckets: Dict[str, List] = defaultdict(list)
+    high_priority: Dict[str, List] = defaultdict(list)
+    mid_priority: Dict[str, List] = defaultdict(list)
+    low_priority: Dict[str, List] = defaultdict(list)
     unidentified: List[Tuple[int, str]] = []
 
     for index, row in dataset.iterrows():
@@ -58,278 +89,42 @@ def block_x2(dataset: pd.DataFrame):
         series = row['series']
         pat_hb = row['pat_hb']
 
-        key = name
-        if brand != '0':
-            key = f'{brand}.{mem_type}'
-            # key = f'{brand}.{mem_type}.{capacity}.{model}.{product_type}'
-            # if capacity == '0' and model == '0' and product_type == '0':
-            #     if series != '0' and pat_hb != '0':
-            #         key = f'{brand}.{mem_type}.{series}.{pat_hb}'
-            #     elif series != '0':
-            #         key = f'{brand}.{mem_type}.{series}'
-            #     elif pat_hb != '0':
-            #         key = f'{brand}.{mem_type}.{pat_hb}'
-            #     else:
-            #         key = f'{brand}.{mem_type}'
-            # elif capacity == '0' and model == '0':
-            #     if pat_hb != '0' and series != '0':
-            #         key = f'{brand}.{mem_type}.{product_type}.{series}.{pat_hb}'
-            #     elif pat_hb != '0':
-            #         key = f'{brand}.{mem_type}.{product_type}.{pat_hb}'
-            #     elif series != '0':
-            #         key = f'{brand}.{mem_type}.{product_type}.{series}'
-            #     else:
-            #         key = name
-            # elif model == '0' and product_type == '0':
-            #     if pat_hb != '0' and series != '0':
-            #         key = f'{brand}.{mem_type}.{capacity}.{series}.{pat_hb}'
-            #     elif pat_hb != '0':
-            #         key = f'{brand}.{mem_type}.{capacity}.{pat_hb}'
-            #     elif series != '0':
-            #         key = f'{brand}.{mem_type}.{capacity}.{series}'
-            #     else:
-            #         key = name
-            # elif product_type == '0':
-            #     if pat_hb != '0' and series != '0':
-            #         key = f'{brand}.{mem_type}.{capacity}.{model}.{series}.{pat_hb}'
-            #     elif pat_hb != '0':
-            #         key = f'{brand}.{mem_type}.{capacity}.{model}.{pat_hb}'
-            #     elif series != '0':
-            #         key = f'{brand}.{mem_type}.{capacity}.{model}.{series}'
-            #     else:
-            #         key = name
+        high_priority[name].append(instance_id)
+
+        if product_type == '0' and brand == "intenso" and model in model_2_type.keys():
+            product_type = model_2_type[model]
+
+        # if capacity in ('256g', '512g', '1t', '2t') and brand not in ('samsung', 'sandisk'):
+        #     high_priority[f'{brand}.{capacity}'].append((instance_id, name))
+        #     continue
+
+        key = f'{brand}.{mem_type}.{capacity}.{model}.{product_type}'
+        sig = 'high'
+        if capacity == '0' and model == '0' and product_type == '0':
+            key, sig = gen_key_sig(key, pat_hb, series)
+        elif capacity == '0' and model == '0':
+            key, sig = gen_key_sig(key, pat_hb, series)
+        elif model == '0' and product_type == '0':
+            key, sig = gen_key_sig(key, pat_hb, series)
+        elif product_type == '0':
+            key, sig = gen_key_sig(key, pat_hb, series)
+        if brand == '0' and sig == 'mid':
+            sig = 'low'
+        if sig == 'high':
+            high_priority[key].append(instance_id)
+        elif sig == 'mid':
+            mid_priority[key].append(instance_id)
         else:
-            if capacity == '0' and model == '0' and product_type == '0':
-                if series != '0' and pat_hb != '0':
-                    key = f'{mem_type}.{series}.{pat_hb}'
-                elif series != '0':
-                    key = f'{mem_type}.{series}'
-                elif pat_hb != '0':
-                    key = f'{mem_type}.{pat_hb}'
-                else:
-                    key = name
-            elif capacity == '0' and model == '0':
-                if pat_hb != '0' and series != '0':
-                    key = f'{mem_type}.{product_type}.{series}.{pat_hb}'
-                elif series != '0':
-                    key = f'{mem_type}.{product_type}.{series}'
-                elif pat_hb != '0':
-                    key = f'{mem_type}.{product_type}.{pat_hb}'
-                else:
-                    key = name
-            elif model == '0' and product_type == '0':
-                if pat_hb != '0' and series != '0':
-                    key = f'{mem_type}.{capacity}.{series}.{pat_hb}'
-                elif series != '0':
-                    key = f'{mem_type}.{capacity}.{series}'
-                elif pat_hb != '0':
-                    key = f'{mem_type}.{capacity}.{pat_hb}'
-                else:
-                    key = name
-            elif product_type == '0':
-                if pat_hb != '0' and series != '0':
-                    key = f'{mem_type}.{capacity}.{model}.{series}.{pat_hb}'
-                elif series != '0':
-                    key = f'{mem_type}.{capacity}.{model}.{series}'
-                elif pat_hb != '0':
-                    key = f'{mem_type}.{capacity}.{model}.{pat_hb}'
-                else:
-                    key = name
-        buckets[key].append((instance_id, name))
+            low_priority[key].append(instance_id)
 
-        # if product_type == '0' and model == '0':
-        #     unidentified.append((instance_id, name))
-        #     continue
-
-        # if product_type == '0' and brand == "intenso" and model in model_2_type.keys():
-        #     product_type = model_2_type[model]
-
-        # if capacity in ('256gb', '512gb', '1tb', '2tb') and brand not in ('samsung', 'sandisk'):
-        #     buckets[f'{brand}.{capacity}'].append((instance_id, name))
-        #     continue
-
-    solved = 0
-    candidates = []
+    candidates = set()
+    gen_pair_for_priority(candidates, high_priority, 2000000)
+    gen_pair_for_priority(candidates, mid_priority, 2000000)
+    gen_pair_for_priority(candidates, low_priority, 2000000)
+    print('output pairs:\t', len(candidates))
     jaccard_similarities = []
-    for key in buckets.keys():
-        bucket = buckets[key]
-        # print()
-        # print()
-        # print(key)
-        for i in range(len(bucket)):
-            # print(bucket[i][1])
-            for j in range(i + 1, len(bucket)):
-                solved += 1
-                if bucket[i][0] < bucket[j][0]:
-                    candidates.append((bucket[i], bucket[j], key))
-                    # candidates.append((bucket[i][0], bucket[j][0]))
-                elif bucket[i][0] > bucket[j][0]:
-                    candidates.append((bucket[j], bucket[i], key))
-                    # candidates.append((bucket[j][0], bucket[i][0]))
-                s1 = set(bucket[i][1].split())
-                s2 = set(bucket[j][1].lower().split())
-                jaccard_similarities.append(len(s1.intersection(s2)) / max(len(s1), len(s2)))
-    candidates = [x for _, x in sorted(zip(jaccard_similarities, candidates), reverse=True)]
-    print('output pairs:\t', solved)
-
-        # if brand == 'lexar':
-        #     if product_type != '0' and mem_type != '0':
-        #         buckets[f'{brand}.{capacity}.{mem_type}.{product_type}.{series}'].append((instance_id, name))
-        #     else:
-        #         unidentified.append((instance_id, name))
-        # elif brand == 'sony':
-        #     if mem_type in ('ssd', 'microsd') or capacity == '1tb':
-        #         buckets[f'{brand}.{capacity}.{mem_type}.{series}'].append((instance_id, name))
-        #     elif mem_type != '0' and product_type != '0':
-        #         buckets[f'{brand}.{capacity}.{mem_type}.{product_type}.{series}'].append((instance_id, name))
-        #     else:
-        #         unidentified.append((instance_id, name))
-        # elif brand == 'sandisk':
-        #     if mem_type != '0':
-        #         buckets[f'{brand}.{capacity}.{mem_type}.{model}.{series}'].append((instance_id, name))
-        #     else:
-        #         unidentified.append((instance_id, name))
-        # elif brand == 'pny':
-        #     if mem_type != '0':
-        #         buckets[f'{brand}.{capacity}.{mem_type}.{series}'].append((instance_id, name))
-        #     else:
-        #         unidentified.append((instance_id, name))
-        # elif brand == 'intenso':
-        #     if product_type != '0':
-        #         buckets[f'{brand}.{capacity}.{product_type}.{series}'].append((instance_id, name))
-        #     else:
-        #         unidentified.append((instance_id, name))
-        # elif brand == 'kingston':
-        #     if mem_type != '0':
-        #         buckets[f'{brand}.{capacity}.{mem_type}.{series}'].append((instance_id, name))
-        #     else:
-        #         unidentified.append((instance_id, name))
-        # elif brand == 'samsung':
-        #     if mem_type in ('microsd', 'ssd', 'sd', 'usb') and model != '0':
-        #         buckets[f'{brand}.{capacity}.{mem_type}.{model}.{series}'].append((instance_id, name))
-        #     elif mem_type != '0' and product_type != '0' and model != '0':
-        #         buckets[f'{brand}.{capacity}.{mem_type}.{product_type}.{model}.{series}'].append((instance_id, name))
-        #     else:
-        #         unidentified.append((instance_id, name))
-        # elif brand == 'toshiba':
-        #     if mem_type != '0' and model != '0':
-        #         buckets[f'{brand}.{capacity}.{model}.{mem_type}.{series}'].append((instance_id, name))
-        #     elif mem_type != '0' and product_type != '0':
-        #         buckets[f'{brand}.{capacity}.{product_type}.{mem_type}.{series}'].append((instance_id, name))
-        #     else:
-        #         unidentified.append((instance_id, name))
-        # elif brand == 'transcend':
-        #     if mem_type != '0':
-        #         buckets[f'{brand}.{capacity}.{mem_type}.{series}'].append((instance_id, name))
-        #     else:
-        #         unidentified.append((instance_id, name))
-        # else:
-        #     if brand != '0' and  and mem_type != '0':
-        #         buckets[f'{brand}.{capacity}.{mem_type}.{series}'].append((instance_id, name))
-        #     else:
-        #         unidentified.append((instance_id, name))
-
-    # solved_classes = set()
-    # for s in solved_spec:
-    #     if s['capacity'] != '0' and s['mem_type'] != '0':
-    #         solved_classes.add(s['brand'] + s['capacity'] + s['mem_type'])
-    # unsolved_spec_cp = unsolved_spec.copy()
-    # for u in unsolved_spec_cp:
-    #     if u['capacity'] != '0' and u['mem_type'] != '0' and (
-    #             u['type'] != '0' or u['model'] != '0'):
-    #         if (u['brand'] + u['capacity'] +
-    #             u['mem_type']) not in solved_classes:
-    #             u['identification'] = u['brand'] + u['capacity'] + \
-    #                                   u['mem_type'] + u['type'] + u['model']
-    #             solved_spec.append(u)
-    #             unsolved_spec.remove(u)
-    #             solved_classes.add(u['brand'] + u['capacity'] + u['mem_type'])
-    # unsolved_spec_cp = unsolved_spec.copy()
-    # for u in unsolved_spec_cp:
-    #     if u['capacity'] != '0' and u['mem_type'] != '0':
-    #         if (u['brand'] + u['capacity'] +
-    #             u['mem_type']) not in solved_classes:
-    #             u['identification'] = u['brand'] + u['capacity'] + \
-    #                                   u['mem_type'] + u['type'] + u['model']
-    #             solved_spec.append(u)
-    #             unsolved_spec.remove(u)
-    #             solved_classes.add(u['brand'] + u['capacity'] + u['mem_type'])
-    # unsolved_spec_cp = unsolved_spec.copy()
-    # for u in unsolved_spec_cp:
-    #     if u['capacity'] != '0':
-    #         if (u['brand'] + u['capacity'] +
-    #             u['mem_type']) not in solved_classes:
-    #             u['identification'] = u['brand'] + u['capacity'] + \
-    #                                   u['mem_type'] + u['type'] + u['model']
-    #             solved_spec.append(u)
-    #             unsolved_spec.remove(u)
-    #             solved_classes.add(u['brand'] + u['capacity'] + u['mem_type'])
-    #
-    # unsolved_spec_cp = unsolved_spec.copy()
-    # solved_spec_cp = solved_spec.copy()
-    #
-    # for u in unsolved_spec_cp:
-    #     for s in solved_spec_cp:
-    #         if u['item_code'] != '0' and u['item_code'] == s['item_code']:
-    #             u['identification'] = s['identification']
-    #             solved_spec.append(u)
-    #             if u in unsolved_spec:
-    #                 unsolved_spec.remove(u)
-    #
-    # unsolved_spec_cp = unsolved_spec.copy()
-    # solved_spec_cp = solved_spec.copy()
-    #
-    # for u in unsolved_spec_cp:
-    #     if u['brand'] == 'sandisk':
-    #         continue
-    #     for s in solved_spec_cp:
-    #         if u['brand'] != '0' and u['capacity'] != '0' and u['mem_type'] != '0' and u['type'] != '0':
-    #             if u['brand'] == s['brand'] and u['capacity'] == s['capacity'] and u['mem_type'] == s['mem_type'] and \
-    #                     u['type'] == s['type']:
-    #                 u['identification'] = s['identification']
-    #                 solved_spec.append(u)
-    #                 unsolved_spec.remove(u)
-    #                 break
-    #         elif u['brand'] != '0' and u['capacity'] != '0' and u['mem_type'] != '0' and u['model'] != '0':
-    #             if u['brand'] == s['brand'] and u['capacity'] == s['capacity'] and u['mem_type'] == s['mem_type'] and \
-    #                     u['model'] == s['model']:
-    #                 u['identification'] = s['identification']
-    #                 solved_spec.append(u)
-    #                 unsolved_spec.remove(u)
-    #                 break
-    #         elif u['brand'] != '0' and u['capacity'] != '0' and u['type'] != '0' and u['model'] != '0':
-    #             if u['brand'] == s['brand'] and u['capacity'] == s['capacity'] and u['type'] == s['type'] and \
-    #                     u['model'] == s['model']:
-    #                 u['identification'] = s['identification']
-    #                 solved_spec.append(u)
-    #                 unsolved_spec.remove(u)
-    #                 break
-    #         elif u['brand'] != '0' and u['capacity'] != '0' and u['mem_type'] != '0':
-    #             if u['brand'] == s['brand'] and u['capacity'] == s['capacity'] and u['mem_type'] == s['mem_type']:
-    #                 u['identification'] = s['identification']
-    #                 solved_spec.append(u)
-    #                 unsolved_spec.remove(u)
-    #                 break
-    #         elif u['brand'] != '0' and u['capacity'] != '0' and u['type'] != '0':
-    #             if u['brand'] == s['brand'] and u['capacity'] == s['capacity'] and u['type'] == s['type']:
-    #                 u['identification'] = s['identification']
-    #                 solved_spec.append(u)
-    #                 unsolved_spec.remove(u)
-    #                 break
-    #
-    # clusters = dict()
-    #
-    # for s in solved_spec:
-    #     if s['identification'] in clusters.keys():
-    #         clusters[s['identification']].append(s['id'])
-    #     else:
-    #         clusters.update({s['identification']: [s['id']]})
-    #
-    # for u in unsolved_spec:
-    #     if u['title'] in clusters.keys():
-    #         clusters[u['title']].append(u['id'])
-    #     else:
-    #         clusters.update({u['title']: [u['id']]})
-
-    # print('unidentified size: ', len(unidentified))
-    return candidates
+    # s1 = set(bucket[i][1].split())
+    # s2 = set(bucket[j][1].lower().split())
+    # jaccard_similarities.append(len(s1.intersection(s2)) / max(len(s1), len(s2)))
+    # candidates = [x for _, x in sorted(zip(jaccard_similarities, candidates), reverse=True)]
+    return list(candidates)
