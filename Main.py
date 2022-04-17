@@ -46,22 +46,22 @@ if __name__ == '__main__':
     features = extract_x2(features)
     candidates_x2 = block_x2(features)
     candidates_x1 = []
-    save_output(candidates_x1, 1000000, candidates_x2, 2000000)
+    # save_output(candidates_x1, 1000000, candidates_x2, 2000000)
     # output_df = pd.DataFrame(candidates_x2, columns=['left_instance_id', 'right_instance_id'])
     # output_df.to_csv('output.csv', index=False)
 
-    # gnd = pd.read_csv('Y2.csv')
-    # gnd['cnt'] = 0
-    # for idx in range(len(candidates_x2)):
-    #     if candidates_x2[idx][0][0] == 0:
-    #         continue
-    #     index = gnd[(gnd['lid'] == candidates_x2[idx][0][0]) & (gnd['rid'] == candidates_x2[idx][1][0])].index.tolist()
-    #     if len(index) > 0:
-    #         if len(index) > 1:
-    #             raise Exception
-    #         gnd['cnt'][index[0]] += 1
-    #     else:
-    #         # print(candidates_x2[idx][2], '|', candidates_x2[idx][0][1], '|', candidates_x2[idx][1][1])
-    #         pass
-    # print('correct pairs:\t', sum(gnd['cnt']))
-    # print('recall:\t\t\t', sum(gnd['cnt']) / gnd.values.shape[0])
+    gnd = pd.read_csv('Y2.csv')
+    gnd['cnt'] = 0
+    for idx in range(len(candidates_x2)):
+        if candidates_x2[idx][0][0] == 0:
+            continue
+        index = gnd[(gnd['lid'] == candidates_x2[idx][0][0]) & (gnd['rid'] == candidates_x2[idx][1][0])].index.tolist()
+        if len(index) > 0:
+            if len(index) > 1:
+                raise Exception
+            gnd['cnt'][index[0]] += 1
+        else:
+            print(candidates_x2[idx][2], '|', candidates_x2[idx][0][1], '|', candidates_x2[idx][1][1])
+            pass
+    print('correct pairs:\t', sum(gnd['cnt']))
+    print('recall:\t\t\t', sum(gnd['cnt']) / gnd.values.shape[0])

@@ -78,9 +78,11 @@ def extract_x2(data: pd.DataFrame) -> pd.DataFrame:
                 for sn in families[b]:
                     if sn in name_info:
                         pattern.add(sn)
-                series = ''.join(sorted(list(pattern)))
         if len(brand_list) > 0:
             brand = ''.join(sorted(list(brand_list)))
+        if len(pattern) > 0:
+            # series = ''.join(sorted(list(pattern)))
+            series = sorted(list(pattern))[0]
 
         pattern = set(re.findall(r'\w+-\w+', name_info))
         if len(pattern) > 0:
@@ -225,8 +227,8 @@ def extract_x2(data: pd.DataFrame) -> pd.DataFrame:
                 elif 'ext pro' in name_info:
                     mem_type = 'microsd'
                     model = 'ext+'
-            if 'adapter' in name_info or 'adaptateur' in name_info:
-                mem_type = 'microsd'
+            # if 'adapter' in name_info or 'adaptateur' in name_info:
+            #     mem_type = 'microsd'
             if mem_type == '0':
                 if 'drive' in name_info:
                     mem_type = 'usb'
@@ -234,8 +236,15 @@ def extract_x2(data: pd.DataFrame) -> pd.DataFrame:
                     mem_type = 'usb'
                 elif model in ('glide', 'fit'):
                     mem_type = 'usb'
-            if 'sandisk - ' + capacity + ' extreme en fnac.es' in name_info:
-                mem_type = 'usb'
+            if mem_type == 'sd':
+                if 'msd' in name_info:
+                    mem_type = 'msd'
+                elif 'sdhc' in name_info:
+                    mem_type = 'sdhc'
+                elif 'sdxc' in name_info:
+                    mem_type = 'sdxc'
+            # if 'sandisk - ' + capacity + ' extreme en fnac.es' in name_info:
+            #     mem_type = 'usb'
         elif brand == 'pny':
             type_model = re.search(r'att.*?[3-4]', name_info)
             if type_model is not None:

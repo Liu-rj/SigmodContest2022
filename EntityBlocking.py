@@ -63,7 +63,28 @@ def block_x2(dataset: pd.DataFrame):
         if brand != '0':
             key = f'{brand}.{mem_type}.{capacity}.{model}.{product_type}'
             if capacity == '0' and model == '0' and product_type == '0':
-                key = f'{brand}.{mem_type}.{series}'
+                if series != '0' and pat_hb != '0':
+                    key = f'{brand}.{mem_type}.{series}.{pat_hb}'
+                elif series != '0':
+                    key = f'{brand}.{mem_type}.{series}'
+                elif pat_hb != '0':
+                    key = f'{brand}.{mem_type}.{pat_hb}'
+                else:
+                    key = name
+            elif model == '0' and product_type == '0':
+                if pat_hb != '0':
+                    key = f'{brand}.{mem_type}.{capacity}.{pat_hb}'
+                elif series != '0':
+                    key = f'{brand}.{mem_type}.{capacity}.{series}'
+                else:
+                    key = name
+            elif product_type == '0':
+                if pat_hb != '0':
+                    key = f'{brand}.{mem_type}.{capacity}.{model}.{pat_hb}'
+                elif series != '0':
+                    key = f'{brand}.{mem_type}.{capacity}.{model}.{series}'
+                else:
+                    key = name
             # elif model == '0' and product_type == '0':
             #     key = f'{brand}.{mem_type}.{capacity}'
             # if series != '0' and pat_hb != '0':
@@ -98,11 +119,11 @@ def block_x2(dataset: pd.DataFrame):
             for j in range(i + 1, len(bucket)):
                 solved += 1
                 if bucket[i][0] < bucket[j][0]:
-                    # candidates.append((bucket[i], bucket[j], key))
-                    candidates.append((bucket[i][0], bucket[j][0]))
+                    candidates.append((bucket[i], bucket[j], key))
+                    # candidates.append((bucket[i][0], bucket[j][0]))
                 elif bucket[i][0] > bucket[j][0]:
-                    # candidates.append((bucket[j], bucket[i], key))
-                    candidates.append((bucket[j][0], bucket[i][0]))
+                    candidates.append((bucket[j], bucket[i], key))
+                    # candidates.append((bucket[j][0], bucket[i][0]))
                 s1 = set(bucket[i][1].split())
                 s2 = set(bucket[j][1].lower().split())
                 jaccard_similarities.append(len(s1.intersection(s2)) / max(len(s1), len(s2)))
