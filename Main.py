@@ -1,11 +1,6 @@
 import pandas as pd
 from FeatureExtracting import extract_x2
 from EntityBlocking import block_x2
-from collections import defaultdict
-import re
-from tqdm import tqdm
-import time
-from typing import *
 
 
 def gen_candidates(buckets) -> []:
@@ -40,10 +35,10 @@ brands_x1 = ['dell', 'lenovo', 'acer', 'asus', 'hp', 'panasonic', 'toshiba', 'so
 
 
 if __name__ == '__main__':
-    features = pd.read_csv('X1.csv')
-    features = pd.read_csv('X2.csv')
-    features['name'] = features.name.str.lower()
-    features = extract_x2(features)
+    raw_data = pd.read_csv('X1.csv')
+    raw_data = pd.read_csv('X2.csv')
+    raw_data['name'] = raw_data.name.str.lower()
+    features = extract_x2(raw_data)
     candidates_x2 = block_x2(features)
     candidates_x1 = []
     # save_output(candidates_x1, 1000000, candidates_x2, 2000000)
@@ -61,7 +56,13 @@ if __name__ == '__main__':
                 raise Exception
             gnd['cnt'][index[0]] += 1
         else:
-            print(candidates_x2[idx][2], '|', candidates_x2[idx][0][1], '|', candidates_x2[idx][1][1])
+            # print(candidates_x2[idx][2], '|', candidates_x2[idx][0][1], '|', candidates_x2[idx][1][1])
             pass
     print('correct pairs:\t', sum(gnd['cnt']))
     print('recall:\t\t\t', sum(gnd['cnt']) / gnd.values.shape[0])
+    left = gnd[gnd['cnt'] == 0].reset_index()
+    for idx in range(left.shape[0]):
+        print(left['lid'][idx], ',', left['rid'][idx])
+        print(raw_data[raw_data['id'] == left['lid'][idx]]['name'].iloc[0])
+        print(raw_data[raw_data['id'] == left['rid'][idx]]['name'].iloc[0])
+        print()

@@ -24,22 +24,27 @@ def extract_x2(data: pd.DataFrame) -> pd.DataFrame:
     brands = ['sandisk', 'lexar', 'kingston', 'intenso', 'toshiba', 'sony', 'pny', 'samsung']
     families = {'sandisk': ['tarjeta', 'glide', 'select', 'extern', 'origin', 'transmemory', 'react', 'memo', 'kart',
                             'pendrive', 'car', 'serie', 'line', 'extreme', 'cruzer', 'ultra', 'micro', 'traveler',
-                            'hyperx', 'sd', 'usb', 'adapt', 'wex'],
-                'lexar': ['ultra', 'xqd', 'jumpdrive', 'micro', 'pendrive', 'sd', 'tarjeta', 'jumpdirve', 'usb', 'memo',
+                            'hyperx', 'sd', 'usb', 'adapt', 'wex', 'flash'],
+                'lexar': ['ultra', 'xqd', 'jumpdrive', 'micro', 'pendrive', 'sd', 'tarjeta', 'jumpdrive', 'usb', 'memo',
                           'extreme', 'blade', 'car', 'scheda', 'veloc', 'react', 'adapt', 'secure', 'premium', 'wex',
-                          'transmemo', 'alu', 'datatravel', 'canvas', 'flair', 'hyperx', 'cruzer'],
+                          'transmemo', 'alu', 'datatravel', 'canvas', 'flair', 'hyperx', 'cruzer', 'flash'],
                 'toshiba': ['ultra', 'exceria', 'traveler', 'sdhc', 'memoria', 'xqd', 'line', 'usb', 'exceria',
                             'transmemo', 'extreme', 'flair', 'micro', 'speicher', 'serie', 'car'],
                 'kingston': ['traveler', 'sd', 'usb', 'car', 'adapt', 'extreme', 'memo', 'micro', 'canvas',
                              'datatravel', 'hyperx', 'kart', 'blade', 'ultimate'],
-                'sony': ['usm32gqx', 'micro', 'sd', 'usb', 'ultra', 'jumpdrive', 'hyperx', 'memo', 'kart', 'xqd',
-                         'pendrive', 'adapt', 'blade', 'cruzer', 'flair', 'glide'],
+                'sony': ['extreme', 'usm32gqx', 'micro', 'sd', 'usb', 'ultra', 'jumpdrive', 'hyperx', 'memo', 'kart',
+                         'xqd', 'pendrive', 'adapt', 'blade', 'cruzer', 'flair', 'glide', 'cart', 'tarjeta', 'flash'],
                 'intenso': ['cs/ultra', 'premium', 'ultra', 'micro', 'micro', 'line', 'scheda', 'usb', 'sd', 'premium',
                             'tarjeta', 'kart', 'car', 'transmemo'],
                 'pny': ['attach', 'usb', 'sd', 'micro', 'premium', 'memo'],
                 'samsung': ['galaxy', 'speicher', 'micro', 'usb', 'sd', 'evo', 'ultra', 'extreme', 'memo', 'adapt',
-                            'car',
-                            'kart', 'klasse', 'multi', 'jumpdrive']
+                            'car', 'kart', 'klasse', 'multi', 'jumpdrive', 'flash'],
+                '0': ['adapt', 'alu', 'attach', 'blade', 'canvas', 'car', 'cart', 'cruzer', 'cs/ultra', 'datatravel',
+                      'evo', 'exceria', 'extern', 'extreme', 'flair', 'flash', 'galaxy', 'glide', 'hyperx',
+                      'jumpdrive', 'kart', 'klasse', 'line', 'memo', 'memoria', 'micro', 'multi', 'origin', 'pendrive',
+                      'premium', 'react', 'scheda', 'sd', 'sdhc', 'secure', 'select', 'serie', 'speicher', 'tarjeta',
+                      'transmemo', 'transmemory', 'traveler', 'ultimate', 'ultra', 'usb', 'usm32gqx', 'veloc', 'wex',
+                      'xqd']
                 }
 
     intenso_type = ["basic", "rainbow", "high speed", "speed", "premium", "alu", "business", "micro",
@@ -80,9 +85,13 @@ def extract_x2(data: pd.DataFrame) -> pd.DataFrame:
                         pattern.add(sn)
         if len(brand_list) > 0:
             brand = ''.join(sorted(list(brand_list)))
+        else:
+            for sn in families['0']:
+                if sn in name_info:
+                    pattern.add(sn)
         if len(pattern) > 0:
-            # series = ''.join(sorted(list(pattern)))
-            series = sorted(list(pattern))[0]
+            series = ''.join(sorted(list(pattern)))
+            # series = sorted(list(pattern))[0]
 
         pattern = set(re.findall(r'\w+-\w+', name_info))
         if len(pattern) > 0:
@@ -144,9 +153,8 @@ def extract_x2(data: pd.DataFrame) -> pd.DataFrame:
                 product_type = type_model.group().strip() \
                     .replace('x', '').replace('l', '').replace('j', '').replace('d', '') \
                     .replace('b', '').replace('e', '').replace('u', '')
-            if mem_type == '0':
-                if 'drive' in name_info:
-                    mem_type = 'usb'
+            if mem_type == '0' and 'drive' in name_info:
+                mem_type = 'usb'
             if 'lexar 8gb jumpdrive v10 8gb usb 2.0 tipo-a blu unità flash usb' in name_info:
                 product_type = 'c20c'
         elif brand == 'sony':
@@ -227,8 +235,8 @@ def extract_x2(data: pd.DataFrame) -> pd.DataFrame:
                 elif 'ext pro' in name_info:
                     mem_type = 'microsd'
                     model = 'ext+'
-            # if 'adapter' in name_info or 'adaptateur' in name_info:
-            #     mem_type = 'microsd'
+            if 'adapt' in name_info and mem_type != '0':
+                mem_type = 'microsd'
             if mem_type == '0':
                 if 'drive' in name_info:
                     mem_type = 'usb'
@@ -243,8 +251,8 @@ def extract_x2(data: pd.DataFrame) -> pd.DataFrame:
                     mem_type = 'sdhc'
                 elif 'sdxc' in name_info:
                     mem_type = 'sdxc'
-            # if 'sandisk - ' + capacity + ' extreme en fnac.es' in name_info:
-            #     mem_type = 'usb'
+            if 'sandisk - ' + capacity + ' extreme en fnac.es' in name_info:
+                mem_type = 'usb'
         elif brand == 'pny':
             type_model = re.search(r'att.*?[3-4]', name_info)
             if type_model is not None:

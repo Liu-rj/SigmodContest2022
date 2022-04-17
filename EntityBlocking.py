@@ -53,46 +53,88 @@ def block_x2(dataset: pd.DataFrame):
         product_type = row['type']
         model = row['model']
         item_code = row['item_code']
-        # name = ' '.join(sorted(row['name'].split()))
-        name = row['name']
+        name = ' '.join(sorted(row['name'].split()))
+        # name = row['name']
         series = row['series']
         pat_hb = row['pat_hb']
 
-        # TODO: usb is wrongly recognized as microsd
         key = name
         if brand != '0':
-            key = f'{brand}.{mem_type}.{capacity}.{model}.{product_type}'
+            key = f'{brand}.{mem_type}'
+            # key = f'{brand}.{mem_type}.{capacity}.{model}.{product_type}'
+            # if capacity == '0' and model == '0' and product_type == '0':
+            #     if series != '0' and pat_hb != '0':
+            #         key = f'{brand}.{mem_type}.{series}.{pat_hb}'
+            #     elif series != '0':
+            #         key = f'{brand}.{mem_type}.{series}'
+            #     elif pat_hb != '0':
+            #         key = f'{brand}.{mem_type}.{pat_hb}'
+            #     else:
+            #         key = f'{brand}.{mem_type}'
+            # elif capacity == '0' and model == '0':
+            #     if pat_hb != '0' and series != '0':
+            #         key = f'{brand}.{mem_type}.{product_type}.{series}.{pat_hb}'
+            #     elif pat_hb != '0':
+            #         key = f'{brand}.{mem_type}.{product_type}.{pat_hb}'
+            #     elif series != '0':
+            #         key = f'{brand}.{mem_type}.{product_type}.{series}'
+            #     else:
+            #         key = name
+            # elif model == '0' and product_type == '0':
+            #     if pat_hb != '0' and series != '0':
+            #         key = f'{brand}.{mem_type}.{capacity}.{series}.{pat_hb}'
+            #     elif pat_hb != '0':
+            #         key = f'{brand}.{mem_type}.{capacity}.{pat_hb}'
+            #     elif series != '0':
+            #         key = f'{brand}.{mem_type}.{capacity}.{series}'
+            #     else:
+            #         key = name
+            # elif product_type == '0':
+            #     if pat_hb != '0' and series != '0':
+            #         key = f'{brand}.{mem_type}.{capacity}.{model}.{series}.{pat_hb}'
+            #     elif pat_hb != '0':
+            #         key = f'{brand}.{mem_type}.{capacity}.{model}.{pat_hb}'
+            #     elif series != '0':
+            #         key = f'{brand}.{mem_type}.{capacity}.{model}.{series}'
+            #     else:
+            #         key = name
+        else:
             if capacity == '0' and model == '0' and product_type == '0':
                 if series != '0' and pat_hb != '0':
-                    key = f'{brand}.{mem_type}.{series}.{pat_hb}'
+                    key = f'{mem_type}.{series}.{pat_hb}'
                 elif series != '0':
-                    key = f'{brand}.{mem_type}.{series}'
+                    key = f'{mem_type}.{series}'
                 elif pat_hb != '0':
-                    key = f'{brand}.{mem_type}.{pat_hb}'
+                    key = f'{mem_type}.{pat_hb}'
+                else:
+                    key = name
+            elif capacity == '0' and model == '0':
+                if pat_hb != '0' and series != '0':
+                    key = f'{mem_type}.{product_type}.{series}.{pat_hb}'
+                elif series != '0':
+                    key = f'{mem_type}.{product_type}.{series}'
+                elif pat_hb != '0':
+                    key = f'{mem_type}.{product_type}.{pat_hb}'
                 else:
                     key = name
             elif model == '0' and product_type == '0':
-                if pat_hb != '0':
-                    key = f'{brand}.{mem_type}.{capacity}.{pat_hb}'
+                if pat_hb != '0' and series != '0':
+                    key = f'{mem_type}.{capacity}.{series}.{pat_hb}'
                 elif series != '0':
-                    key = f'{brand}.{mem_type}.{capacity}.{series}'
+                    key = f'{mem_type}.{capacity}.{series}'
+                elif pat_hb != '0':
+                    key = f'{mem_type}.{capacity}.{pat_hb}'
                 else:
                     key = name
             elif product_type == '0':
-                if pat_hb != '0':
-                    key = f'{brand}.{mem_type}.{capacity}.{model}.{pat_hb}'
+                if pat_hb != '0' and series != '0':
+                    key = f'{mem_type}.{capacity}.{model}.{series}.{pat_hb}'
                 elif series != '0':
-                    key = f'{brand}.{mem_type}.{capacity}.{model}.{series}'
+                    key = f'{mem_type}.{capacity}.{model}.{series}'
+                elif pat_hb != '0':
+                    key = f'{mem_type}.{capacity}.{model}.{pat_hb}'
                 else:
                     key = name
-            # elif model == '0' and product_type == '0':
-            #     key = f'{brand}.{mem_type}.{capacity}'
-            # if series != '0' and pat_hb != '0':
-            #     key = f'{brand}.{capacity}.{mem_type}.{product_type}.{model}.{series}.{pat_hb}'
-            # elif series != '0':
-            #     key = f'{brand}.{capacity}.{mem_type}.{product_type}.{model}.{series}'
-            # elif pat_hb != '0':
-            #     key = f'{brand}.{capacity}.{mem_type}.{product_type}.{model}.{pat_hb}'
         buckets[key].append((instance_id, name))
 
         # if product_type == '0' and model == '0':
