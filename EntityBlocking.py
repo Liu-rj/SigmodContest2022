@@ -84,7 +84,7 @@ def block_x2(dataset: pd.DataFrame):
         product_type = row['type']
         model = row['model']
         item_code = row['item_code']
-        name = ' '.join(sorted(row['name'].split()))
+        name = ''.join(sorted(row['name'].split()))
         # name = row['name']
         series = row['series']
         pat_hb = row['pat_hb']

@@ -4,6 +4,7 @@
 # Unused csv
 output.csv
 X2_BIG.csv
+data/big/
 
 # Unused bash
 *.sh
