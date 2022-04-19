@@ -26,7 +26,7 @@ def save_output(X1_candidate_pairs, X2_candidate_pairs):
     # make sure to have the pairs in the first dataset first
     all_cand_pairs = X1_candidate_pairs + X2_candidate_pairs
     output_df = pd.DataFrame(all_cand_pairs, columns=[
-                             "left_instance_id", "right_instance_id"])
+        "left_instance_id", "right_instance_id"])
     # In evaluation, we expect output.csv to include exactly 3000000 tuple pairs.
     # we expect the first 1000000 pairs are for dataset X1, and the remaining pairs are for dataset X2
     output_df.to_csv("output.csv", index=False)
@@ -62,7 +62,7 @@ def cal_recall(gnd):
         if predict[idx][0] == 0:
             break
         index = gnd[(gnd['lid'] == predict[idx][0]) & (
-            gnd['rid'] == predict[idx][1])].index.tolist()
+                gnd['rid'] == predict[idx][1])].index.tolist()
         if len(index) > 0:
             gnd['cnt'][index[0]] += 1
         if len(index) > 1:
@@ -89,7 +89,7 @@ def get_x1_pairs(data, embeddings):
         for i in range(shape0):
             s1 = min(I[i][j], i)
             s2 = max(I[i][j], i)
-            token = str(s1)+" "+str(s2)
+            token = str(s1) + " " + str(s2)
             if s1 == s2 or token in hashset:
                 continue
             if len(hashset) < limit:

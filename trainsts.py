@@ -11,8 +11,6 @@ from sentence_transformers import SentenceTransformer, LoggingHandler, losses, u
 from sentence_transformers.evaluation import EmbeddingSimilarityEvaluator
 import logging
 from datetime import datetime
-import os
-import gzip
 import csv
 
 # Just some code to print debug information to stdout
@@ -30,35 +28,37 @@ import csv
 
 # Read the dataset
 # model_name = 'all-MiniLM-L6-v2'
-model_name = 'paraphrase-MiniLM-L3-v2'
+# model_name = 'paraphrase-MiniLM-L3-v2'
 # model_name = 'prajjwal1/bert-tiny'
+model_name = 'model/mix_base'
+print('model:\t', model_name)
 train_batch_size = 128
-num_epochs = 4
-model_save_path = 'model/' + model_name + '-' + datetime.now().strftime(
+num_epochs = 200
+model_save_path = 'model/' + 'sts' + '-' + model_name + '-' + datetime.now().strftime(
     "%Y-%m-%d_%H-%M-%S")
 
 # Load a pre-trained sentence transformer model
 model = SentenceTransformer(model_name)
 
 # Convert the dataset to a DataLoader ready for training
-logging.info("Read Sigmod X1 train dataset")
+logging.info("Read X2 train dataset")
 
 train_samples = []
 dev_samples = []
 test_samples = []
-with open('data/train_small.csv', 'r') as fin:
+with open('data/sts_train_x2.csv', 'r') as fin:
     reader = csv.DictReader(fin, delimiter=',')
     for row in reader:
         inp_example = InputExample(
             texts=[row['left'], row['right']], label=float(row['score']))
         train_samples.append(inp_example)
-with open('data/dev_small.csv', 'r') as fin:
+with open('data/sts_dev_x2.csv', 'r') as fin:
     reader = csv.DictReader(fin, delimiter=',')
     for row in reader:
         inp_example = InputExample(
             texts=[row['left'], row['right']], label=float(row['score']))
         dev_samples.append(inp_example)
-with open('data/test_small.csv', 'r') as fin:
+with open('data/sts_test_x2.csv', 'r') as fin:
     reader = csv.DictReader(fin, delimiter=',')
     for row in reader:
         inp_example = InputExample(
@@ -70,7 +70,7 @@ train_dataloader = DataLoader(
 train_loss = losses.CosineSimilarityLoss(model=model)
 
 # Development set: Measure correlation between cosine score and gold labels
-logging.info("Read Sigmod X1 dev dataset")
+logging.info("Read X2 dev dataset")
 evaluator = EmbeddingSimilarityEvaluator.from_input_examples(
     dev_samples, name='sts-dev')
 
@@ -85,9 +85,9 @@ model.fit(train_objectives=[(train_dataloader, train_loss)],
           epochs=num_epochs,
           evaluation_steps=1000,
           warmup_steps=warmup_steps,
-          output_path=model_save_path
-        #   checkpoint_path='model/checkpoints/data_small',
-        #   checkpoint_save_steps=665
+          output_path=model_save_path,
+          checkpoint_path='model/checkpoints/sts-mix_base',
+          checkpoint_save_steps=2000
           )
 
 ##############################################################################

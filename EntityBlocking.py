@@ -20,7 +20,7 @@ def gen_key_sig(key, pattern1, pattern2):
     return key, sig
 
 
-def gen_pair_for_priority(candidates: Set, priority: Dict[str, List], max_size: int):
+def gen_pair_for_priority(candidates: Set, priority: Dict, max_size: int):
     if len(candidates) > max_size:
         return
     for key in priority.keys():
@@ -74,7 +74,7 @@ def block_x2(dataset: pd.DataFrame):
     high_priority: Dict[str, List] = defaultdict(list)
     mid_priority: Dict[str, List] = defaultdict(list)
     low_priority: Dict[str, List] = defaultdict(list)
-    unidentified: List[Tuple[int, str]] = []
+    unidentified: List[Tuple[Tuple, int]] = []
 
     for index, row in dataset.iterrows():
         instance_id = row['id']
@@ -91,31 +91,31 @@ def block_x2(dataset: pd.DataFrame):
 
         high_priority[name].append(instance_id)
 
-        if product_type == '0' and brand == "intenso" and model in model_2_type.keys():
-            product_type = model_2_type[model]
-
-        # if capacity in ('256g', '512g', '1t', '2t') and brand not in ('samsung', 'sandisk'):
-        #     high_priority[f'{brand}.{capacity}'].append((instance_id, name))
-        #     continue
-
-        key = f'{brand}.{mem_type}.{capacity}.{model}.{product_type}'
-        sig = 'high'
-        if capacity == '0' and model == '0' and product_type == '0':
-            key, sig = gen_key_sig(key, pat_hb, series)
-        elif capacity == '0' and model == '0':
-            key, sig = gen_key_sig(key, pat_hb, series)
-        elif model == '0' and product_type == '0':
-            key, sig = gen_key_sig(key, pat_hb, series)
-        elif product_type == '0':
-            key, sig = gen_key_sig(key, pat_hb, series)
-        if brand == '0' and sig == 'mid':
-            sig = 'low'
-        if sig == 'high':
-            high_priority[key].append(instance_id)
-        elif sig == 'mid':
-            mid_priority[key].append(instance_id)
-        else:
-            low_priority[key].append(instance_id)
+        # if product_type == '0' and brand == "intenso" and model in model_2_type.keys():
+        #     product_type = model_2_type[model]
+        #
+        # # if capacity in ('256g', '512g', '1t', '2t') and brand not in ('samsung', 'sandisk'):
+        # #     high_priority[f'{brand}.{capacity}'].append((instance_id, name))
+        # #     continue
+        #
+        # key = f'{brand}.{mem_type}.{capacity}.{model}.{product_type}'
+        # sig = 'high'
+        # if capacity == '0' and model == '0' and product_type == '0':
+        #     key, sig = gen_key_sig(key, pat_hb, series)
+        # elif capacity == '0' and model == '0':
+        #     key, sig = gen_key_sig(key, pat_hb, series)
+        # elif model == '0' and product_type == '0':
+        #     key, sig = gen_key_sig(key, pat_hb, series)
+        # elif product_type == '0':
+        #     key, sig = gen_key_sig(key, pat_hb, series)
+        # if brand == '0' and sig == 'mid':
+        #     sig = 'low'
+        # if sig == 'high':
+        #     high_priority[key].append(instance_id)
+        # elif sig == 'mid':
+        #     mid_priority[key].append(instance_id)
+        # else:
+        #     low_priority[key].append(instance_id)
 
     candidates = set()
     gen_pair_for_priority(candidates, high_priority, 2000000)

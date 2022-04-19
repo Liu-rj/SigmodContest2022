@@ -5,7 +5,13 @@
 output.csv
 X2_BIG.csv
 
-# reprozip
+# Unused bash
+*.sh
+
+# Model
+model/
+
+# Reprozip
 .reprozip-trace/
 *.rpz
 
