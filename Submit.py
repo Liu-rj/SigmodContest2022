@@ -112,19 +112,18 @@ def x2_test(data: pd.DataFrame, limit: int, model_path: str) -> list:
     candidate_pairs = candidate_pairs[:limit]
     output = list(map(lambda x: (x[0], x[1]), candidate_pairs))
 
-    predict = output
-    cnt = 0
-    gnd = pd.read_csv("Y2.csv")
-    for i in range(len(predict)):
-        if not gnd[(gnd['lid'] == predict[i][0]) & (gnd['rid'] == predict[i][1])].empty:
-            cnt += 1
-    recall = cnt / gnd.values.shape[0]
-    print('recall:\t', recall)
+    # predict = output
+    # cnt = 0
+    # gnd = pd.read_csv("Y2.csv")
+    # for i in range(len(predict)):
+    #     if not gnd[(gnd['lid'] == predict[i][0]) & (gnd['rid'] == predict[i][1])].empty:
+    #         cnt += 1
+    # recall = cnt / gnd.values.shape[0]
+    # print('recall:\t', recall)
     return output
 
 
-def save_output(X1_candidate_pairs,
-                X2_candidate_pairs):  # save the candset for both datasets to a SINGLE file output.csv
+def save_output(X1_candidate_pairs, X2_candidate_pairs):  # save the candset for both datasets to a SINGLE file output.csv
     expected_cand_size_X1 = 1000000
     expected_cand_size_X2 = 2000000
 
@@ -151,18 +150,10 @@ if __name__ == '__main__':
     raw_data = pd.read_csv("X1.csv")
     raw_data = pd.read_csv("X2.csv")
 
-    # path = 'model/checkpoints/sts-mix_base/62000'
-    path = 'model/mix_base'
+    # path = 'model/checkpoints/sts-mix_base/24000'
+    # path = 'model/mix_base'
+    path = 'model/282'
     raw_data['name'] = raw_data.name.str.lower()
     raw_data['instance_id'] = raw_data['id']
-
-    # nn_model_path = f'model/checkpoints/sts-mix_base/'
-    # import os, re
-    # direct = sorted(os.listdir(nn_model_path), key=lambda x: int(re.sub(r'\D', '', x)))
-    # for d in direct:
-    #     path = nn_model_path + d
-    #     print(path)
-    #     x2_test(raw_data, 4392, path)
-
-    x2_pair = x2_test(raw_data, 4392, path)
-    # save_output([], x2_pair)
+    x2_pair = x2_test(raw_data, 2000000, path)
+    save_output([], x2_pair)
