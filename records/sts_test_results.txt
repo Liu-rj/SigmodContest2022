@@ -1,0 +1,127 @@
+/home/lrj/miniconda3/envs/sigmod/bin/python /home/lrj/Public/SigmodContest2022/Submit.py
+model/checkpoints/sts-mix_base/2000
+recall:	 0.6416211293260473
+model/checkpoints/sts-mix_base/4000
+recall:	 0.36953551912568305
+model/checkpoints/sts-mix_base/6000
+recall:	 0.404143897996357
+model/checkpoints/sts-mix_base/8000
+recall:	 0.5091074681238615
+model/checkpoints/sts-mix_base/10000
+recall:	 0.5853825136612022
+model/checkpoints/sts-mix_base/12000
+recall:	 0.660063752276867
+model/checkpoints/sts-mix_base/14000
+recall:	 0.7106102003642987
+model/checkpoints/sts-mix_base/16000
+recall:	 0.7543260473588342
+model/checkpoints/sts-mix_base/18000
+recall:	 0.7775500910746812
+model/checkpoints/sts-mix_base/20000
+recall:	 0.7959927140255009
+model/checkpoints/sts-mix_base/22000
+recall:	 0.8073770491803278
+model/checkpoints/sts-mix_base/24000
+recall:	 0.8260473588342441
+model/checkpoints/sts-mix_base/26000
+recall:	 0.8321948998178507
+model/checkpoints/sts-mix_base/28000
+recall:	 0.8381147540983607
+model/checkpoints/sts-mix_base/30000
+recall:	 0.8378870673952641
+model/checkpoints/sts-mix_base/30900
+recall:	 0.8139799635701275
+model/checkpoints/sts-mix_base/32000
+recall:	 0.8456284153005464
+model/checkpoints/sts-mix_base/34000
+recall:	 0.8497267759562842
+model/checkpoints/sts-mix_base/36000
+recall:	 0.848816029143898
+model/checkpoints/sts-mix_base/38000
+recall:	 0.8483606557377049
+model/checkpoints/sts-mix_base/40000
+recall:	 0.855191256830601
+model/checkpoints/sts-mix_base/42000
+recall:	 0.85724043715847
+model/checkpoints/sts-mix_base/44000
+recall:	 0.8561020036429873
+model/checkpoints/sts-mix_base/46000
+recall:	 0.8579234972677595
+model/checkpoints/sts-mix_base/48000
+recall:	 0.8570127504553734
+model/checkpoints/sts-mix_base/50000
+recall:	 0.860655737704918
+model/checkpoints/sts-mix_base/52000
+recall:	 0.860655737704918
+model/checkpoints/sts-mix_base/54000
+recall:	 0.8642987249544627
+model/checkpoints/sts-mix_base/56000
+recall:	 0.8629326047358834
+model/checkpoints/sts-mix_base/58000
+recall:	 0.8647540983606558
+model/checkpoints/sts-mix_base/60000
+recall:	 0.863615664845173
+model/checkpoints/sts-mix_base/62000
+recall:	 0.863615664845173
+model/checkpoints/sts-mix_base/64000
+recall:	 0.8640710382513661
+model/checkpoints/sts-mix_base/66000
+recall:	 0.8640710382513661
+model/checkpoints/sts-mix_base/68000
+recall:	 0.8649817850637522
+model/checkpoints/sts-mix_base/70000
+recall:	 0.8640710382513661
+model/checkpoints/sts-mix_base/72000
+recall:	 0.8663479052823315
+model/checkpoints/sts-mix_base/74000
+recall:	 0.8652094717668488
+model/checkpoints/sts-mix_base/76000
+recall:	 0.8663479052823315
+model/checkpoints/sts-mix_base/78000
+recall:	 0.86316029143898
+model/checkpoints/sts-mix_base/80000
+recall:	 0.8640710382513661
+model/checkpoints/sts-mix_base/82000
+recall:	 0.8647540983606558
+model/checkpoints/sts-mix_base/84000
+recall:	 0.8645264116575592
+model/checkpoints/sts-mix_base/86000
+recall:	 0.8638433515482696
+model/checkpoints/sts-mix_base/88000
+recall:	 0.8649817850637522
+model/checkpoints/sts-mix_base/90000
+recall:	 0.8645264116575592
+model/checkpoints/sts-mix_base/92000
+recall:	 0.8642987249544627
+model/checkpoints/sts-mix_base/94000
+recall:	 0.8654371584699454
+model/checkpoints/sts-mix_base/96000
+recall:	 0.8640710382513661
+model/checkpoints/sts-mix_base/98000
+recall:	 0.8640710382513661
+model/checkpoints/sts-mix_base/100000
+recall:	 0.8638433515482696
+model/checkpoints/sts-mix_base/102000
+recall:	 0.863615664845173
+model/checkpoints/sts-mix_base/104000
+recall:	 0.8647540983606558
+model/checkpoints/sts-mix_base/106000
+recall:	 0.8622495446265938
+model/checkpoints/sts-mix_base/108000
+recall:	 0.8624772313296903
+model/checkpoints/sts-mix_base/110000
+recall:	 0.8629326047358834
+model/checkpoints/sts-mix_base/112000
+recall:	 0.8629326047358834
+model/checkpoints/sts-mix_base/114000
+recall:	 0.8629326047358834
+model/checkpoints/sts-mix_base/116000
+recall:	 0.86316029143898
+model/checkpoints/sts-mix_base/118000
+recall:	 0.8633879781420765
+model/checkpoints/sts-mix_base/120000
+recall:	 0.86316029143898
+model/checkpoints/sts-mix_base/122000
+recall:	 0.8633879781420765
+model/checkpoints/sts-mix_base/123600
+recall:	 0.8629326047358834
