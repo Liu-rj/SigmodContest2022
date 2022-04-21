@@ -18,7 +18,7 @@ families = {
 }
 
 
-def clean_x2(data):
+def clean(data):
     """Clean X2.csv data to a readable format.
 
     :param data: X2.csv
@@ -51,14 +51,14 @@ def clean_x2(data):
     result = []
     for row in range(len(instance_ids)):
         # information按长度排序
-        #information[row] =list(map(lambda x:str(x),information[row]))
+        # information[row] =list(map(lambda x:str(x),information[row]))
         information[row].sort(key=lambda i: len(i), reverse=True)
         # title of each row
         if len(titles[row]) == 0:
             titles[row] = ['']
         rowinfo = titles[row][0]
 
-        #对丢失的信息进行填充
+        # 对丢失的信息进行填充
         for mess in information[row]:
             if mess not in rowinfo:
                 rowinfo = rowinfo + ' - ' + mess
@@ -90,7 +90,7 @@ def clean_x2(data):
             for b in amd_cores:
                 if b in lower_item:
                     cpu_core = b.strip()
-                    #补充信息
+                    # 补充信息
                     cpu_brand = 'amd'
                     break
         if cpu_brand != 'amd':
@@ -101,20 +101,20 @@ def clean_x2(data):
                     break
 
         if brand == 'lenovo':
-            #print(name_info)
+            # print(name_info)
             result_name_number = re.search(
                 r'[\- ][0-9]{4}[0-9a-zA-Z]{2}[0-9a-yA-Y](?![0-9a-zA-Z])', name_info)
             if result_name_number is None:
                 result_name_number = re.search(
                     r'[\- ][0-9]{4}(?![0-9a-zA-Z])', name_info)
-                #print(result_name_number.group())
+                # print(result_name_number.group())
             if result_name_number is not None:
-                #print(name_info)
-                #print(result_name_number.group())
+                # print(name_info)
+                # print(result_name_number.group())
                 name_number = result_name_number.group().replace(
                     '-', '').strip().lower()[:4]
         elif brand == 'hp':
-            #print(name_info)
+            # print(name_info)
             result_name_number = re.search(r'[0-9]{4}[pPwW]', name_info)
             if result_name_number is None:
                 result_name_number = re.search(
@@ -129,19 +129,19 @@ def clean_x2(data):
             if result_name_number is None:
                 result_name_number = re.search(r'[0-9]{4}DX', name_info)
             if result_name_number is not None:
-                #print(result_name_number.group())
+                # print(result_name_number.group())
                 name_number = result_name_number.group().lower().replace('-', '').replace(' ', '')
         elif brand == 'dell':
-            #print(name_info)
+            # print(name_info)
             result_name_number = re.search(
                 r'[a-zA-Z][0-9]{3}[a-zA-Z]', name_info)
             if result_name_number is None:
                 result_name_number = re.search(r'[0-9]{3}-[0-9]{3}', name_info)
             if result_name_number is not None:
-                #print(result_name_number.group())
+                # print(result_name_number.group())
                 name_number = result_name_number.group().lower().replace('-', '')
         elif brand == 'acer':
-            #print(name_info)
+            # print(name_info)
             result_name_number = re.search(
                 r'[A-Za-z][0-9][\- ][0-9]{3}', name_info)
             if result_name_number is None:
@@ -150,24 +150,24 @@ def clean_x2(data):
                 result_name_number = re.search(
                     r'[0-9]{4}[- ][0-9]{4}', name_info)
             if result_name_number is not None:
-                #print(result_name_number.group())
+                # print(result_name_number.group())
                 name_number = result_name_number.group().lower().replace(' ', '-').replace('-', '')
                 if len(name_number) == 8:
-                    #print(name_number)
+                    # print(name_number)
                     name_number = name_number[:4]
         elif brand == 'asus':
-            #print(name_info)
+            # print(name_info)
             result_name_number = re.search(
                 r'[A-Za-z]{2}[0-9]?[0-9]{2}[A-Za-z]?[A-Za-z]', name_info)
             if result_name_number is not None:
-                #print(result_name_number.group())
+                # print(result_name_number.group())
                 name_number = result_name_number.group().lower().replace(' ', '-').replace('-', '')
 
         if cpu_brand == 'intel':
             item_curr = item.replace(
                 name_number, '').replace(
                 name_number.upper(), '')
-            #print(item_curr)
+            # print(item_curr)
             result_model = re.search(
                 r'[\- ][0-9]{4}[Qq]?[MmUu](?![Hh][Zz])', item_curr)
             if result_model is None:
@@ -187,7 +187,7 @@ def clean_x2(data):
                     '[\\- ]((1st)|(2nd)|(3rd)|([4-9]st))[ ][Gg]en', item_curr)
             if result_model is not None:
                 cpu_model = result_model.group()[1:].lower()
-                #print(cpu_model)
+                # print(cpu_model)
         elif cpu_brand == 'amd':
             item_curr = item.replace(
                 name_number, '').replace(
@@ -216,7 +216,7 @@ def clean_x2(data):
         result_frequency = re.search(
             r'[123][ .][0-9]?[0-9]?[ ]?[Gg][Hh][Zz]', item)
         if result_frequency is not None:
-            #print(result_frequency.group())
+            # print(result_frequency.group())
             result_frequency = re.split(r'[GgHhZz]', result_frequency.group())[
                 0].strip().replace(' ', '.')
             if len(result_frequency) == 3:
@@ -229,7 +229,7 @@ def clean_x2(data):
         result_ram_capacity = re.search(
             r'[1-9][\s]?[Gg][Bb][\s]?((S[Dd][Rr][Aa][Mm])|(D[Dd][Rr]3)|([Rr][Aa][Mm])|(Memory))', item)
         if result_ram_capacity is not None:
-            #print(result_ram_capacity.group())
+            # print(result_ram_capacity.group())
             ram_capacity = result_ram_capacity.group()[:1]
 
         result_display_size = re.search(r'1[0-9]([. ][0-9])?\"', item)
@@ -268,8 +268,8 @@ def clean_x2(data):
             name_family,
             titles[row][0].lower()
         ])
-        #print(result[len(result)-1])
-        #result[0].sort(key=lambda i: len(i), reverse=True)
+        # print(result[len(result)-1])
+        # result[0].sort(key=lambda i: len(i), reverse=True)
         # for x in result[0]:
         #     r = re.search(x,item.lower())
         #     if r is not None:

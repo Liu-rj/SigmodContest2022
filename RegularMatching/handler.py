@@ -1,5 +1,5 @@
 import pandas as pd
-from clean import clean_x2
+from clean import clean
 
 pc_aliases = {
     "2320": "3435", "v7482": "v7582", "810g2": "810", "2338": "2339",
@@ -46,7 +46,7 @@ def handle(dataset: pd.DataFrame):
              left_instance_id: the right instance of a matched pair}
     """
 
-    dataset = clean_x2(dataset)
+    dataset = clean(dataset)
 
     for index, row in dataset.iterrows():
         instance_id = row['instance_id']
@@ -87,7 +87,7 @@ def handle(dataset: pd.DataFrame):
         if pc_name != '0' and cpu_model != '0' and capacity != '0' and cpu_core != '0':
             pc['identification'] = brand + ' ' + pc_name + \
                 ' ' + cpu_model + ' ' + capacity + ' ' + cpu_core
-            solved_spec.append(pc)
+            solved_spec.append((pc,index))
         else:
             #print(pc_name,cpu_model,capacity,cpu_core)
             unsolved_spec.append(pc)
@@ -182,17 +182,17 @@ def handle(dataset: pd.DataFrame):
 
     clusters = dict()
 
-    for s in solved_spec:
+    for s,index in solved_spec:
         if s['identification'] in clusters.keys():
-            clusters[s['identification']].append(s['id'])
+            clusters[s['identification']].append(index)
         else:
-            clusters.update({s['identification']: [s['id']]})
+            clusters.update({s['identification']: [index]})
 
-    for u in unsolved_spec:
-        if u['title'] in clusters.keys():
-            clusters[u['title']].append(u['id'])
-        else:
-            clusters.update({u['title']: [u['id']]})
+    # for u in unsolved_spec:
+    #     if u['title'] in clusters.keys():
+    #         clusters[u['title']].append(u['id'])
+    #     else:
+    #         clusters.update({u['title']: [u['id']]})
 
     couples = set()
     for c in clusters.keys():

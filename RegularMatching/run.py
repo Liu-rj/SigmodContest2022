@@ -88,8 +88,14 @@ def block_with_attr(X, attr):  # replace with your logic.
 
 
     # remove duplicate pairs and take union
+    X11_candidate_pairs = []
+    if attr == "title":
+        data = pd.read_csv(file_name)
+        X11_candidate_pairs = handle(data).values.tolist()
+        X11_candidate_pairs = map(lambda x: tuple(x), X11_candidate_pairs)
     candidate_pairs = set(candidate_pairs_2)
-    candidate_pairs = candidate_pairs.union(set(candidate_pairs_1)).union(set(candidate_pairs_3)).union(set(candidate_pairs_4))
+    candidate_pairs = candidate_pairs.union(set(candidate_pairs_1)).union(set(candidate_pairs_3)).union(
+        set(candidate_pairs_4)).union(set(X11_candidate_pairs))
     candidate_pairs = list(candidate_pairs)
 
     # sort candidate pairs by jaccard similarity.
@@ -131,10 +137,10 @@ def save_output(X1_candidate_pairs,
         X2_candidate_pairs = X2_candidate_pairs[:expected_cand_size_X2]
 
     # make sure to include exactly 1000000 pairs for dataset X1 and 2000000 pairs for dataset X2
-    if len(X1_candidate_pairs) < expected_cand_size_X1:
-        X1_candidate_pairs.extend([(0, 0)] * (expected_cand_size_X1 - len(X1_candidate_pairs)))
-    if len(X2_candidate_pairs) < expected_cand_size_X2:
-        X2_candidate_pairs.extend([(0, 0)] * (expected_cand_size_X2 - len(X2_candidate_pairs)))
+    # if len(X1_candidate_pairs) < expected_cand_size_X1+expected_cand_size_X2:
+    #     X1_candidate_pairs.extend([(0, 0)] * (expected_cand_size_X1 - len(X1_candidate_pairs)))
+    # if len(X2_candidate_pairs) < expected_cand_size_X2:
+    #     X2_candidate_pairs.extend([(0, 0)] * (expected_cand_size_X2 - len(X2_candidate_pairs)))
 
     all_cand_pairs = X1_candidate_pairs + X2_candidate_pairs  # make sure to have the pairs in the first dataset first
     output_df = pd.DataFrame(all_cand_pairs, columns=["left_instance_id", "right_instance_id"])
@@ -142,37 +148,35 @@ def save_output(X1_candidate_pairs,
     # we expect the first 1000000 pairs are for dataset X1, and the remaining pairs are for dataset X2
     output_df.to_csv("output.csv", index=False)
 
+
 if __name__ == '__main__':
     X1_candidate_pairs = []
     X2_candidate_pairs = []
-    for file_name in ['X1.csv','X2.csv']:
+    for file_name in ['X1.csv']:
         if file_name == "X1.csv":
             X1 = pd.read_csv("X1.csv")
+            #X1_candidate_pairs = handle(X1).values.tolist()
             X1_candidate_pairs = block_with_attr(X1, attr="title")
-            data = pd.read_csv(file_name)
-            X1_set = set(X1_candidate_pairs)
-            X11_candidate_pairs = handle(data).values.tolist()
-            X11_candidate_pairs = map(lambda x:tuple(x),X11_candidate_pairs)
-            X11_set = set(X11_candidate_pairs)
-            X1_candidate_pairs = list(X1_set.union(X11_set))
+
+
         else:
             # read the datasets
-            X2 = pd.read_csv("X2.csv",dtype=object)
+            X2 = pd.read_csv("X2.csv", dtype=object)
             # perform blocking
             X2_candidate_pairs = block_with_attr(X2, attr="name")
 
             # save results
-        save_output(X1_candidate_pairs, X2_candidate_pairs)
+        save_output(X1_candidate_pairs, [])
         # if Flag:
         #         output.to_csv("Y1.csv", sep=',', encoding='utf-8', index=False)
         #         Flag = False
 
     #calculate
-    # with open('../Y1.csv', 'r') as csv1, open('output.csv', 'r') as csv2:
-    #     import1 = csv1.readlines()
-    #     import2 = csv2.readlines()
-    #     same = 0
-    #     for row in import2:
-    #         if row in import1:
-    #             same = same + 1
-    #     print(same / len(import1))
+    with open('../Y1.csv', 'r') as csv1, open('output.csv', 'r') as csv2:
+        import1 = csv1.readlines()
+        import2 = csv2.readlines()
+        same = 0
+        for row in import2:
+            if row in import1:
+                same = same + 1
+        print(same / len(import1))
