@@ -86,10 +86,10 @@ def handle(dataset: pd.DataFrame):
 
         if pc_name != '0' and cpu_model != '0' and capacity != '0' and cpu_core != '0':
             pc['identification'] = brand + ' ' + pc_name + \
-                ' ' + cpu_model + ' ' + capacity + ' ' + cpu_core
-            solved_spec.append((pc,index))
+                                   ' ' + cpu_model + ' ' + capacity + ' ' + cpu_core
+            solved_spec.append((pc, index))
         else:
-            #print(pc_name,cpu_model,capacity,cpu_core)
+            # print(pc_name,cpu_model,capacity,cpu_core)
             unsolved_spec.append(pc)
 
     # for u in unsolved_spec.copy():
@@ -182,11 +182,11 @@ def handle(dataset: pd.DataFrame):
 
     clusters = dict()
 
-    for s,index in solved_spec:
+    for s, index in solved_spec:
         if s['identification'] in clusters.keys():
-            clusters[s['identification']].append(index)
+            clusters[s['identification']].append(s['id'])
         else:
-            clusters.update({s['identification']: [index]})
+            clusters.update({s['identification']: [s['id']]})
 
     # for u in unsolved_spec:
     #     if u['title'] in clusters.keys():

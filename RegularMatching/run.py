@@ -104,9 +104,13 @@ def block_with_attr(X, attr):  # replace with your logic.
     # so that when we keep only the first 1000000 pairs we are keeping the most likely pairs
     jaccard_similarities = []
     candidate_pairs_real_ids = []
+    solved = []
+    for i in range(X.shape[0]):
+        solved.append(0)
     for it in tqdm(candidate_pairs):
         id1, id2 = it
-
+        solved[id1] = 1
+        solved[id2] = 1
         # get real ids
         real_id1 = X['id'][id1]
         real_id2 = X['id'][id2]
@@ -121,6 +125,9 @@ def block_with_attr(X, attr):  # replace with your logic.
         s1 = set(name1.lower().split())
         s2 = set(name2.lower().split())
         jaccard_similarities.append(len(s1.intersection(s2)) / max(len(s1), len(s2)))
+    for i in range(len(solved)):
+        if solved[i] == 0:
+            print(X['title'][i])
     candidate_pairs_real_ids = [x for _, x in sorted(zip(jaccard_similarities, candidate_pairs_real_ids), reverse=True)]
     return candidate_pairs_real_ids
 
@@ -129,7 +136,7 @@ def save_output(X1_candidate_pairs,
                 X2_candidate_pairs):  # save the candset for both datasets to a SINGLE file output.csv
     expected_cand_size_X1 = 1000000
     expected_cand_size_X2 = 2000000
-
+    print(len(X1_candidate_pairs))
     # make sure to include exactly 1000000 pairs for dataset X1 and 2000000 pairs for dataset X2
     if len(X1_candidate_pairs) > expected_cand_size_X1:
         X1_candidate_pairs = X1_candidate_pairs[:expected_cand_size_X1]
@@ -138,7 +145,7 @@ def save_output(X1_candidate_pairs,
 
     # make sure to include exactly 1000000 pairs for dataset X1 and 2000000 pairs for dataset X2
     # if len(X1_candidate_pairs) < expected_cand_size_X1+expected_cand_size_X2:
-    #     X1_candidate_pairs.extend([(0, 0)] * (expected_cand_size_X1 - len(X1_candidate_pairs)))
+    #     X1_candidate_pairs.extend([(0, 0)] * (expected_cand_size_X1+expected_cand_size_X2-len(X1_candidate_pairs)))
     # if len(X2_candidate_pairs) < expected_cand_size_X2:
     #     X2_candidate_pairs.extend([(0, 0)] * (expected_cand_size_X2 - len(X2_candidate_pairs)))
 
@@ -155,8 +162,8 @@ if __name__ == '__main__':
     for file_name in ['X1.csv']:
         if file_name == "X1.csv":
             X1 = pd.read_csv("X1.csv")
-            #X1_candidate_pairs = handle(X1).values.tolist()
-            X1_candidate_pairs = block_with_attr(X1, attr="title")
+            X1_candidate_pairs = handle(X1).values.tolist()
+            #X1_candidate_pairs = block_with_attr(X1, attr="title")
 
 
         else:

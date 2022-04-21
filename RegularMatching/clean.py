@@ -1,7 +1,10 @@
 import pandas as pd
 import re
 
-brands = ['dell', 'lenovo', 'acer', 'asus', 'hp']
+# brands = ['dell', 'lenovo', 'acer', 'asus', 'hp']
+brands = ['compaq', 'toshiba', 'sony', 'ibm', 'epson', 'xmg', 'vaio', 'samsung', 'panasonic ', 'nec ', 'gateway',
+          'google', 'fujitsu', 'eurocom', 'asus', 'alienware', 'dell','aoson','gemei','msi',
+          'lenovo', 'acer', 'asus', 'hp', 'lg ', 'microsoft','apple']
 
 cpu_brands = ['intel', 'amd']
 
@@ -15,6 +18,29 @@ families = {
     'asus': [r'zenbook', ],
     'acer': [r'aspire', r'extensa', ],
     '0': []
+}
+families_brand = {
+    'elitebook': 'hp',
+    'compaq': 'hp',
+    'folio': 'hp',
+    'pavilion': 'hp',
+    'inspiron': 'dell',
+    'zenbook': 'asus',
+    'aspire': 'acer',
+    'extensa': 'acer',
+    'thinkpad': 'lenovo',
+    'thinkcentre': 'lenovo',
+    'thinkserver' :'lenovo',
+    'toughbook': 'panasonic',
+    'envy': 'hp',
+    'macbook': 'apple',
+    'probook': 'hp',
+    'latitude': 'dell',
+    'chromebook': '0',
+    'tecra':'toshiba',
+    'touchsmart':'hp',
+    'dominator':'msi',
+    'satellite':'toshiba'
 }
 
 
@@ -42,26 +68,16 @@ def clean(data):
 
     instance_ids = data.filter(items=['id'], axis=1)
     titles = data.filter(items=['title'], axis=1)
-    information = data.drop(["id"], axis=1)
-    information = information.fillna('')
     instance_ids = instance_ids.values.tolist()
-    information = information.values.tolist()
     titles = titles.values.tolist()
 
     result = []
     for row in range(len(instance_ids)):
-        # information按长度排序
-        # information[row] =list(map(lambda x:str(x),information[row]))
-        information[row].sort(key=lambda i: len(i), reverse=True)
         # title of each row
         if len(titles[row]) == 0:
             titles[row] = ['']
         rowinfo = titles[row][0]
 
-        # 对丢失的信息进行填充
-        for mess in information[row]:
-            if mess not in rowinfo:
-                rowinfo = rowinfo + ' - ' + mess
         brand = '0'
         cpu_brand = '0'
         cpu_core = '0'
@@ -71,16 +87,27 @@ def clean(data):
         display_size = '0'
         name_number = '0'
         name_family = '0'
+        brand_list = []
 
-        item = rowinfo
-        lower_item = item.lower()
-
-        name_info = item
+        # lower_item = ' '.join(sorted(rowinfo.lower().split()))
+        lower_item = rowinfo.lower()
+        name_info = rowinfo
 
         for b in brands:
             if b in lower_item:
                 brand = b
+                brand_list.append(b)
+
+        for family in families_brand.keys():
+            if family in lower_item and brand == '0':
+                brand = families_brand[family]
+                name_family = family
+                brand_list.append(brand)
                 break
+        # 错别字
+        if 'pansonic' in lower_item:
+            brand = 'panasonic'
+
 
         for b in cpu_brands:
             if b in lower_item:
@@ -164,7 +191,7 @@ def clean(data):
                 name_number = result_name_number.group().lower().replace(' ', '-').replace('-', '')
 
         if cpu_brand == 'intel':
-            item_curr = item.replace(
+            item_curr = name_info.replace(
                 name_number, '').replace(
                 name_number.upper(), '')
             # print(item_curr)
@@ -189,7 +216,7 @@ def clean(data):
                 cpu_model = result_model.group()[1:].lower()
                 # print(cpu_model)
         elif cpu_brand == 'amd':
-            item_curr = item.replace(
+            item_curr = name_info.replace(
                 name_number, '').replace(
                 name_number.upper(), '')
             if cpu_core == 'a8':
@@ -214,7 +241,7 @@ def clean(data):
                     cpu_model = result_model.group().lower().replace('-', '').replace(' ', '')
 
         result_frequency = re.search(
-            r'[123][ .][0-9]?[0-9]?[ ]?[Gg][Hh][Zz]', item)
+            r'[123][ .][0-9]?[0-9]?[ ]?[Gg][Hh][Zz]', name_info)
         if result_frequency is not None:
             # print(result_frequency.group())
             result_frequency = re.split(r'[GgHhZz]', result_frequency.group())[
@@ -227,33 +254,32 @@ def clean(data):
             cpu_frequency = result_frequency
 
         result_ram_capacity = re.search(
-            r'[1-9][\s]?[Gg][Bb][\s]?((S[Dd][Rr][Aa][Mm])|(D[Dd][Rr]3)|([Rr][Aa][Mm])|(Memory))', item)
+            r'[1-9][\s]?[Gg][Bb][\s]?((S[Dd][Rr][Aa][Mm])|(D[Dd][Rr]3)|([Rr][Aa][Mm])|(Memory))', name_info)
         if result_ram_capacity is not None:
             # print(result_ram_capacity.group())
             ram_capacity = result_ram_capacity.group()[:1]
 
-        result_display_size = re.search(r'1[0-9]([. ][0-9])?\"', item)
+        result_display_size = re.search(r'1[0-9]([. ][0-9])?\"', name_info)
         if result_display_size is not None:
             display_size = result_display_size.group().replace(" ", ".")[:-1]
         else:
             result_display_size = re.search(
-                r'1[0-9]([. ][0-9])?[- ][Ii]nch(?!es)', item)
+                r'1[0-9]([. ][0-9])?[- ][Ii]nch(?!es)', name_info)
         if result_display_size is not None and display_size == '0':
             display_size = result_display_size.group().replace(" ", ".")[:-5]
         elif result_display_size is None:
             result_display_size = re.search(
-                r'(?<!x)[ ]1[0-9][. ][0-9]([ ]|(\'\'))(?!x)', item)
+                r'(?<!x)[ ]1[0-9][. ][0-9]([ ]|(\'\'))(?!x)', name_info)
         if result_display_size is not None and display_size == '0':
             display_size = result_display_size.group().replace(
                 "\'", " ").strip().replace(' ', '.')
-            #print(item)
-            #print(display_size)
 
-        for pattern in families[brand]:
-            result_name_family = re.search(pattern, lower_item)
-            if result_name_family is not None:
-                name_family = result_name_family.group().strip()
-                break
+        if brand in families.keys():
+            for pattern in families[brand]:
+                result_name_family = re.search(pattern, lower_item)
+                if result_name_family is not None:
+                    name_family = result_name_family.group().strip()
+                    break
 
         result.append([
             instance_ids[row][0],
@@ -268,13 +294,35 @@ def clean(data):
             name_family,
             titles[row][0].lower()
         ])
-        # print(result[len(result)-1])
-        # result[0].sort(key=lambda i: len(i), reverse=True)
-        # for x in result[0]:
-        #     r = re.search(x,item.lower())
-        #     if r is not None:
-        #         item = item.lower().replace(x,"")
+        # 标注
+        names = ['brand', 'cpu_brand', 'cpu_core', 'cpu_model', 'cpu_frequency', 'ram_capacity', 'display_size',
+                 'name_number', 'name_family']
+        tag = []
+        mapping = {'brand': brand,
+                   'cpu_brand': cpu_brand,
+                   'cpu_core': cpu_core,
+                   'cpu_model': cpu_model,
+                   'cpu_frequency': cpu_frequency,
+                   'ram_capacity': ram_capacity,
+                   'display_size': display_size,
+                   'name_number': name_number,
+                   'name_family': name_family}
+        words = titles[row][0].lower().split()
+        for i in range(len(words)):
+            tag.append('0')
+        for name in names:
+            if name == 'brand':
+                for x in brand_list:
+                    if x.strip() in words:
+                        index = words.index(x.strip())
+                        tag[index] = 'B-' + 'brand'
+            else:
+                if mapping[name] != '0':
+                    if mapping[name] in words:
+                        index = words.index(mapping[name])
+                        tag[index] = 'B-' + name
 
+        # print(tag)
 
     result = pd.DataFrame(result)
     name = [
