@@ -41,7 +41,7 @@ if __name__ == '__main__':
     features = extract_x2(raw_data)
     candidates_x2 = block_x2(features)
     candidates_x1 = []
-    save_output(candidates_x1, 1000000, candidates_x2, 2000000)
+    # save_output(candidates_x1, 1000000, candidates_x2, 2000000)
     # output_df = pd.DataFrame(candidates_x2, columns=['left_instance_id', 'right_instance_id'])
     # output_df.to_csv('output.csv', index=False)
 
@@ -58,6 +58,7 @@ if __name__ == '__main__':
         else:
             # print(candidates_x2[idx][2], '|', candidates_x2[idx][0][1], '|', candidates_x2[idx][1][1])
             pass
+    print('output pairs:\t', len(candidates_x2))
     print('correct pairs:\t', sum(gnd['cnt']))
     print('recall:\t\t\t', sum(gnd['cnt']) / gnd.values.shape[0])
     # left = gnd[gnd['cnt'] == 0].reset_index()
