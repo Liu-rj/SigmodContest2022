@@ -8,6 +8,7 @@ from data_helper import CustomDataset,  pad_to_maxlen, load_data, load_test_data
 import faiss
 import queue
 import time
+import numpy as np
 
 class MyDataset(Dataset):
     def __init__(self, sentence, tokenizer):
@@ -60,7 +61,7 @@ def collate_fn(batch):
 
 def test(model,data,limit,column):
     sentences=list(map(lambda x:x.lower(),data[column]))
-    label=[-1 for i in range(len(sentences))]
+    #label=[-1 for i in range(len(sentences))]
     tokenizer = BertTokenizer.from_pretrained("./x2_model")
     # input_ids_list=[]
     # attention_mask_list=[]
@@ -78,15 +79,22 @@ def test(model,data,limit,column):
     dataset=MyDataset(sentence=sentences,tokenizer=tokenizer)
     dataloader=DataLoader(dataset=dataset,batch_size=32,collate_fn=collate_fn)
     #input_ids_list,attention_mask_list,token_type_list=collate_fn(input_ids_list,attention_mask_list,token_type_list)
-    trained_embedding=torch.Tensor()
+    dataset=MyDataset(sentence=sentences,tokenizer=tokenizer)
+    dataloader=DataLoader(dataset=dataset,batch_size=32,collate_fn=collate_fn)
+    #input_ids_list,attention_mask_list,token_type_list=collate_fn(input_ids_list,attention_mask_list,token_type_list)
+    #trained_embedding=torch.Tensor()
+    trained_embedding=[]
     for batch in dataloader:
         input_ids_list,attention_mask_list,_=batch
         batch_embedding=model(input_ids=input_ids_list, attention_mask=attention_mask_list, encoder_type='fist-last-avg')
-        batch_embedding=F.normalize(batch_embedding,p=2,dim=1)
-        trained_embedding=torch.cat((trained_embedding,batch_embedding),0)
+        batch_embedding=batch_embedding.detach()
+        batch_embedding=F.normalize(batch_embedding,p=2,dim=1).numpy()
+        #trained_embedding=torch.cat((trained_embedding,batch_embedding),0)
+        trained_embedding.extend(batch_embedding)
+        print(len(trained_embedding))
     #trained_embedding = model(input_ids=input_ids_list, attention_mask=attention_mask_list, encoder_type='fist-last-avg')
     
-    numpy_embedding=trained_embedding.detach().numpy()
+    numpy_embedding=np.array(trained_embedding)
     topk=50
     index=faiss.IndexHNSWFlat(len(numpy_embedding[0]),8)
     index.hnsw.efConstruction=100
