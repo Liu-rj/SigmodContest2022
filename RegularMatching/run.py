@@ -144,8 +144,8 @@ def save_output(X1_candidate_pairs,
         X2_candidate_pairs = X2_candidate_pairs[:expected_cand_size_X2]
 
     # make sure to include exactly 1000000 pairs for dataset X1 and 2000000 pairs for dataset X2
-    # if len(X1_candidate_pairs) < expected_cand_size_X1+expected_cand_size_X2:
-    #     X1_candidate_pairs.extend([(0, 0)] * (expected_cand_size_X1+expected_cand_size_X2-len(X1_candidate_pairs)))
+    if len(X1_candidate_pairs) < expected_cand_size_X1+expected_cand_size_X2:
+        X1_candidate_pairs.extend([(0, 0)] * (expected_cand_size_X1+expected_cand_size_X2-len(X1_candidate_pairs)))
     # if len(X2_candidate_pairs) < expected_cand_size_X2:
     #     X2_candidate_pairs.extend([(0, 0)] * (expected_cand_size_X2 - len(X2_candidate_pairs)))
 
@@ -179,11 +179,11 @@ if __name__ == '__main__':
         #         Flag = False
 
     #calculate
-    with open('../Y1.csv', 'r') as csv1, open('output.csv', 'r') as csv2:
-        import1 = csv1.readlines()
-        import2 = csv2.readlines()
-        same = 0
-        for row in import2:
-            if row in import1:
-                same = same + 1
-        print(same / len(import1))
+    # with open('../Y1.csv', 'r') as csv1, open('output.csv', 'r') as csv2:
+    #     import1 = csv1.readlines()
+    #     import2 = csv2.readlines()
+    #     same = 0
+    #     for row in import2:
+    #         if row in import1:
+    #             same = same + 1
+    #     print(same / len(import1))

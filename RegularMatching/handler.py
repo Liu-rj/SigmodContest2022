@@ -47,7 +47,7 @@ def handle(dataset: pd.DataFrame):
     """
 
     dataset = clean(dataset)
-
+    clusters = dict()
     for index, row in dataset.iterrows():
         instance_id = row['instance_id']
         brand = row['brand']
@@ -83,15 +83,17 @@ def handle(dataset: pd.DataFrame):
         pc['family'] = family
         pc['cpu_frequency'] = cpu_frequency
         pc['display_size'] = display_size
+        if (brand,pc_name,cpu_model,capacity,cpu_core,family,cpu_frequency,display_size) not in clusters.keys():
+            clusters[(brand, pc_name, cpu_model, capacity, cpu_core, family, cpu_frequency, display_size)]=[]
 
-        if pc_name != '0' and cpu_model != '0' and capacity != '0' and cpu_core != '0':
-            pc['identification'] = brand + ' ' + pc_name + \
-                                   ' ' + cpu_model + ' ' + capacity + ' ' + cpu_core
-            solved_spec.append((pc, index))
-        else:
-            # print(pc_name,cpu_model,capacity,cpu_core)
-            unsolved_spec.append(pc)
-
+        clusters[(brand,pc_name,cpu_model,capacity,cpu_core,family,cpu_frequency,display_size)].append(instance_id)
+        # if pc_name != '0' and cpu_model != '0' and capacity != '0' and cpu_core != '0':
+        #     pc['identification'] = brand + ' ' + pc_name + \
+        #                            ' ' + cpu_model + ' ' + capacity + ' ' + cpu_core
+        #     solved_spec.append((pc, index))
+        # else:
+        #     # print(pc_name,cpu_model,capacity,cpu_core)
+        #     unsolved_spec.append(pc)
     # for u in unsolved_spec.copy():
     #     for s in solved_spec.copy():
     #         # brand pc_name capacity cpu_model
@@ -180,19 +182,18 @@ def handle(dataset: pd.DataFrame):
     #             if j not in solved_spec:
     #                 solved_spec.append(j)
 
-    clusters = dict()
-
-    for s, index in solved_spec:
-        if s['identification'] in clusters.keys():
-            clusters[s['identification']].append(s['id'])
-        else:
-            clusters.update({s['identification']: [s['id']]})
+    # for s, index in solved_spec:
+    #     if s['identification'] in clusters.keys():
+    #         clusters[s['identification']].append(s['id'])
+    #     else:
+    #         clusters.update({s['identification']: [s['id']]})
 
     # for u in unsolved_spec:
     #     if u['title'] in clusters.keys():
     #         clusters[u['title']].append(u['id'])
     #     else:
     #         clusters.update({u['title']: [u['id']]})
+
 
     couples = set()
     for c in clusters.keys():
