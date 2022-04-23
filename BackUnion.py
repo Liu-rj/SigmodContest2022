@@ -39,9 +39,13 @@ if __name__ == '__main__':
                 results.append((brand, bucket, contents))
                 break
     results.sort(key=lambda x: x[0])
+    cnt = 0
     for result in results:
+        if result[0] == '':
+            cnt += 1
         print()
         print(result[1])
         for content in result[2]:
             print(content[0], content[1])
         print()
+    print(cnt)

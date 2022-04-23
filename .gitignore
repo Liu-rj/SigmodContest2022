@@ -5,6 +5,8 @@
 output.csv
 X2_BIG.csv
 data/big/
+RF_dataset/
+RandomForestTrain.py
 
 # Unused bash
 *.sh

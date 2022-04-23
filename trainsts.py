@@ -1,6 +1,6 @@
 """
 This example loads the pre-trained SentenceTransformer model 'nli-distilroberta-base-v2' from the server.
-It then fine-tunes this model for some epochs on the STS benchmark dataset.
+It then fine-tunes this model for some epochs on the STS benchmark RF_dataset.
 
 Note: In this example, you must specify a SentenceTransformer model.
 If you want to fine-tune a huggingface/transformers model like bert-base-uncased, see training_nli.py and training_stsbenchmark.py
@@ -20,28 +20,28 @@ import csv
 #                     handlers=[LoggingHandler()])
 # /print debug information to stdout
 
-# Check if dataset exists. If not, download and extract  it
+# Check if RF_dataset exists. If not, download and extract  it
 # sts_dataset_path = 'data/stsbenchmark.tsv.gz'
 
 # if not os.path.exists(sts_dataset_path):
 #     util.http_get('https://sbert.net/datasets/stsbenchmark.tsv.gz', sts_dataset_path)
 
-# Read the dataset
+# Read the RF_dataset
 # model_name = 'all-MiniLM-L6-v2'
 # model_name = 'paraphrase-MiniLM-L3-v2'
 # model_name = 'prajjwal1/bert-tiny'
-model_name = 'model/mix_base'
+model_name = 'model/berttiny_maxpool_maxseqlen30_cp75360'
 print('model:\t', model_name)
 train_batch_size = 128
-num_epochs = 200
+num_epochs = 10
 model_save_path = 'model/' + 'sts' + '-' + model_name + '-' + datetime.now().strftime(
     "%Y-%m-%d_%H-%M-%S")
 
 # Load a pre-trained sentence transformer model
 model = SentenceTransformer(model_name)
 
-# Convert the dataset to a DataLoader ready for training
-logging.info("Read X2 train dataset")
+# Convert the RF_dataset to a DataLoader ready for training
+logging.info("Read X2 train RF_dataset")
 
 train_samples = []
 dev_samples = []
@@ -70,7 +70,7 @@ train_dataloader = DataLoader(
 train_loss = losses.CosineSimilarityLoss(model=model)
 
 # Development set: Measure correlation between cosine score and gold labels
-logging.info("Read X2 dev dataset")
+logging.info("Read X2 dev RF_dataset")
 evaluator = EmbeddingSimilarityEvaluator.from_input_examples(
     dev_samples, name='sts-dev')
 
@@ -92,7 +92,7 @@ model.fit(train_objectives=[(train_dataloader, train_loss)],
 
 ##############################################################################
 #
-# Load the stored model and evaluate its performance on STS benchmark dataset
+# Load the stored model and evaluate its performance on STS benchmark RF_dataset
 #
 ##############################################################################
 
