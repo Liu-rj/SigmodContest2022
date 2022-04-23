@@ -7,7 +7,7 @@ X2_BIG.csv
 data/big/
 RF_dataset/
 RandomForestTrain.py
-
+CoSent/prajjwal1_bert-tiny/
 # Unused bash
 *.sh
 

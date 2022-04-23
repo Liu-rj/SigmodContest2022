@@ -60,15 +60,9 @@ def collate_fn(batch):
     all_segment_ids = torch.tensor(token_type_ids, dtype=torch.long)
     return all_input_ids, all_input_mask, all_segment_ids
 
-<<<<<<< HEAD
-def test(model,data,limit,column):
-    sentences=list(map(lambda x:x.lower(),data[column]))
-    #label=[-1 for i in range(len(sentences))]
-=======
 
 def test(model, data, limit, column):
     sentences = data[column]
->>>>>>> 7aef06590996359f91c9bbc13cc09cddfeb58472
     tokenizer = BertTokenizer.from_pretrained("./x2_model")
     # input_ids_list=[]
     # attention_mask_list=[]
@@ -83,7 +77,6 @@ def test(model, data, limit, column):
     #     input_ids_list.append(inputs['input_ids'])
     #     attention_mask_list.append(inputs['attention_mask'])
     #     token_type_list.append(inputs["token_type_ids"])
-<<<<<<< HEAD
     # dataset=MyDataset(sentence=sentences,tokenizer=tokenizer)
     # dataloader=DataLoader(dataset=dataset,batch_size=32,collate_fn=collate_fn)
     #input_ids_list,attention_mask_list,token_type_list=collate_fn(input_ids_list,attention_mask_list,token_type_list)
@@ -106,24 +99,6 @@ def test(model, data, limit, column):
     topk=50
     index=faiss.IndexHNSWFlat(len(numpy_embedding[0]),8)
     index.hnsw.efConstruction=100
-=======
-    dataset = MyDataset(sentence=sentences, tokenizer=tokenizer)
-    dataloader = DataLoader(dataset=dataset, batch_size=32, collate_fn=collate_fn)
-    # input_ids_list,attention_mask_list,token_type_list=collate_fn(input_ids_list,attention_mask_list,token_type_list)
-    trained_embedding = torch.Tensor()
-    for batch in dataloader:
-        input_ids_list, attention_mask_list, _ = batch
-        batch_embedding = model(input_ids=input_ids_list, attention_mask=attention_mask_list,
-                                encoder_type='fist-last-avg')
-        batch_embedding = F.normalize(batch_embedding, p=2, dim=1)
-        trained_embedding = torch.cat((trained_embedding, batch_embedding), 0)
-    # trained_embedding = model(input_ids=input_ids_list, attention_mask=attention_mask_list, encoder_type='fist-last-avg')
-
-    numpy_embedding = trained_embedding.detach().numpy()
-    topk = 50
-    index = faiss.IndexHNSWFlat(len(numpy_embedding[0]), 8)
-    index.hnsw.efConstruction = 100
->>>>>>> 7aef06590996359f91c9bbc13cc09cddfeb58472
     index.add(numpy_embedding)
     index.hnsw.efSearch = 256
     D, I = index.search(numpy_embedding, topk)
