@@ -1,144 +1,68 @@
-import queue
 from collections import defaultdict
-
 import faiss
 import numpy as np
-from sentence_transformers import SentenceTransformer
+import torch
 import pandas as pd
 from typing import *
-
 from scipy.spatial import distance
+from CoSent.model import Model, encode
+from transformers.models.bert import BertTokenizer
 
 nonsense = ['|', ',', '-', ':', '/', '+', '&']
 
 
-def block_x2(dataset: pd.DataFrame):
-    """
-    Give an identification for each record according to their cleaned field values
-    and match records based on their identification
-
-    param RF_dataset: feature Dataframe of X2 after extracting
-
-    :return:
-            A DataFrame of matched pairs which contains following columns:
-            {left_instance_id: the left instance of a matched pair
-             left_instance_id: the right instance of a matched pair}
-    """
-    model_2_type = {"3502450": "rainbow", "3502460": "rainbow", "3502470": "rainbow", "3502480": "rainbow",
-                    "3502490": "rainbow", "3502491": "rainbow",
-                    "3503460": "basic", "3503470": "basic", "3503480": "basic", "3503490": "basic",
-                    "3533470": "speed", "3533480": "speed", "3533490": "speed", "3533491": "speed", "3533492": "speed",
-                    "3534460": "premium", "3534470": "premium", "3534480": "premium", "3534490": "premium",
-                    "3534491": "premium",
-                    "3521451": "alu", "3521452": "alu", "3521462": "alu", "3521471": "alu",
-                    "3521472": "alu", "3521481": "alu", "3521482": "alu", "3521480": "alu", "3521491": "alu",
-                    "3521492": "alu",
-                    "3511460": "business", "3511470": "business", "3511480": "business", "3511490": "business",
-                    "3500450": "micro", "3500460": "micro", "3500470": "micro", "3500480": "micro",
-                    "3523460": "mobile", "3523470": "mobile", "3523480": "mobile",
-                    "3524460": "mini", "3524470": "mini", "3524480": "mini",
-                    "3531470": "ultra", "3531480": "ultra", "3531490": "ultra", "3531491": "ultra", "3531492": "ultra",
-                    "3531493": "ultra",
-                    "3532460": "slim", "3532470": "slim", "3532480": "slim", "3532490": "slim", "3532491": "slim",
-                    "3537490": "highspeed", "3537491": "highspeed", "3537492": "highspeed",
-                    "3535580": "imobile", "3535590": "imobile",
-                    "3536470": "cmobile", "3536480": "cmobile", "3536490": "cmobile",
-                    "3538480": "flash", "3538490": "flash", "3538491": "flash"}
-
-    model = SentenceTransformer('model/282', device='cpu')
-    encodings = model.encode(sentences=dataset['name'], batch_size=256, normalize_embeddings=True)
-
-    sony_capacity_single = ["1tb", "256gb"]
-    sony_capacity_memtype_type = ["32gb", "4gb"]
-
-    buckets: Dict[str, List] = defaultdict(list)
-    mid_buckets = []
-    large_buckets = []
-    unidentified: List[Tuple[Tuple, int]] = []
+def block_x2(dataset: pd.DataFrame, max_limit):
+    model_path = f'./CoSent/x2_model/base_model_epoch_{38}.bin'
+    my_model = Model(config_path='./CoSent/prajjwal1_bert-tiny/config.json',
+                     bert_path='./CoSent/prajjwal1_bert-tiny/pytorch_model.bin')
+    my_model.load_state_dict(torch.load(model_path, map_location='cpu'))
+    tokenizer = BertTokenizer.from_pretrained('./CoSent/x2_model')
+    encodings = encode(model=my_model, sentences=dataset['name'], tokenizer=tokenizer)
 
     ids = dataset['id'].values
-    series = dataset['series'].values
-    pat_hb = dataset['pat_hb'].values
+    series_list = dataset['series'].values
+    pat_hb_list = dataset['pat_hb'].values
+    brand_list = dataset['brand'].values
+    capacity_list = dataset['capacity'].values
+    mem_list = dataset['mem_type'].values
+    product_list = dataset['type'].values
+    model_list = dataset['model'].values
+    name_list = dataset['name'].values
+
+    features_list = [capacity_list, mem_list, product_list, model_list, series_list, pat_hb_list]
+    buckets: Dict[str, List] = defaultdict(list)
+    special_buckets: Dict[str, List] = defaultdict(list)
+
     for idx in range(dataset.shape[0]):
-        # instance_id = RF_dataset['id'][idx]
-        brand = dataset['brand'][idx]
-        capacity = dataset['capacity'][idx]
-        mem_type = dataset['mem_type'][idx]
-        product_type = dataset['type'][idx]
-        model = dataset['model'][idx]
-        # item_code = RF_dataset['item_code'][idx]
-        name = ''.join(sorted(dataset['name'][idx].split()))
-
-        buckets[name].append(idx)
-
-        if product_type == '0' and brand == "intenso" and model in model_2_type.keys():
-            product_type = model_2_type[model]
-
-        # if capacity in ('256g', '512g', '1t', '2t') and brand not in ('samsung', 'sandisk'):
-        #     high_priority[f'{brand}.{capacity}'].append((instance_id, name))
-        #     continue
-
-        key = f'{brand}.{mem_type}.{capacity}.{model}.{product_type}'
-        # sig = 'high'
-        # if capacity == '0' and model == '0' and product_type == '0':
-        #     key, sig = gen_key_sig(key, pat_hb, series)
-        # elif capacity == '0' and model == '0':
-        #     key, sig = gen_key_sig(key, pat_hb, series)
-        # elif model == '0' and product_type == '0':
-        #     key, sig = gen_key_sig(key, pat_hb, series)
-        # elif product_type == '0':
-        #     key, sig = gen_key_sig(key, pat_hb, series)
-        # if brand == '0' and sig == 'mid':
-        #     sig = 'low'
-        # if sig == 'high':
-        #     high_priority[key].append(instance_id)
-        # elif sig == 'mid':
-        #     mid_priority[key].append(instance_id)
-        # else:
-        #     low_priority[key].append(instance_id)
-        buckets[key].append(idx)
-
-    candidates = set()
-    for key in buckets.keys():
-        bucket = buckets[key]
-        if 20 < len(bucket) < 100:
-            mid_buckets.append(bucket)
-        elif len(bucket) > 100:
-            large_buckets.append(bucket)
-        else:
-            for i in range(len(bucket)):
-                for j in range(i + 1, len(bucket)):
-                    s1 = ids[bucket[i]]
-                    s2 = ids[bucket[j]]
-                    small = min(s1, s2)
-                    large = max(s1, s2)
-                    candidates.add((small, large))
+        buckets[brand_list[idx]].append(idx)
+        if brand_list[idx] == 'sandisk' and mem_list[idx] in ('microsd', 'sd') and model_list[idx] == 'ultra+' and \
+                capacity_list[idx] == '32g':
+            special_buckets['accessoires montres'].append(idx)
+        # print(brand_list[idx], '|', capacity_list[idx], '|', series_list[idx], '|', mem_list[idx], '|',
+        #       product_list[idx], '|', model_list[idx], '|', name_list[idx])
 
     visited_set = set()
-    mid_pairs = []
-    for bucket in mid_buckets:
-        embedding_matrix = encodings[bucket]
-        distance_matrix = distance.cdist(embedding_matrix, embedding_matrix, metric='cosine')
-        idx = np.argsort(distance_matrix)[:, :len(bucket)]
-        for i in range(len(idx)):
-            for j in range(len(idx[0])):
+    candidate_pairs = []
+    faiss_pairs = []
+
+    for key in special_buckets.keys():
+        bucket = special_buckets[key]
+        for i in range(len(bucket)):
+            for j in range(i + 1, len(bucket)):
                 s1 = ids[bucket[i]]
-                s2 = ids[bucket[idx[i][j]]]
+                s2 = ids[bucket[j]]
                 if s1 == s2:
                     continue
                 small = min(s1, s2)
                 large = max(s1, s2)
                 visit_token = (small, large)
-                if visit_token in visited_set or visit_token in candidates:
+                if visit_token in visited_set:
                     continue
                 visited_set.add(visit_token)
-                mid_pairs.append((small, large, distance_matrix[i][idx[i][j]]))
-    mid_pairs.sort(key=lambda x: x[2])
-    mid_pairs = mid_pairs[:50000]
-    mid_pairs = [(x[0], x[1]) for x in mid_pairs]
+                candidate_pairs.append((small, large, 0))
 
-    large_pairs = []
-    for bucket in large_buckets:
+    for key in buckets.keys():
+        bucket = buckets[key]
         embedding_matrix = encodings[bucket]
         index_model = faiss.IndexHNSWFlat(len(embedding_matrix[0]), 8)
         index_model.hnsw.efConstruction = 100
@@ -147,56 +71,105 @@ def block_x2(dataset: pd.DataFrame):
         D, I = index_model.search(embedding_matrix, 50)
         for i in range(len(D)):
             for j in range(len(D[0])):
-                s1 = ids[bucket[i]]
-                s2 = ids[bucket[I[i][j]]]
+                index1 = bucket[i]
+                index2 = bucket[I[i][j]]
+                s1 = ids[index1]
+                s2 = ids[index2]
                 if s1 == s2:
                     continue
                 small = min(s1, s2)
                 large = max(s1, s2)
                 visit_token = (small, large)
-                if visit_token in visited_set or visit_token in candidates:
+                if visit_token in visited_set:
                     continue
                 visited_set.add(visit_token)
-                large_pairs.append((small, large, D[i][j]))
-        # new_buckets: Dict[str, List] = defaultdict(list)
-        # for item in bucket:
-        #     new_buckets[f'{series[item]}.{pat_hb[item]}'].append(item)
-        # for new_buck in new_buckets:
-        #     if len(new_buck) < 20:
-        #         for i in range(len(new_buck)):
-        #             for j in range(i + 1, len(new_buck)):
-        #                 s1 = ids[new_buck[i]]
-        #                 s2 = ids[new_buck[j]]
-        #                 small = min(s1, s2)
-        #                 large = max(s1, s2)
-        #                 candidates.add((small, large))
-        #     else:
-        #         embedding_matrix = encodings[bucket]
-        #         index_model = faiss.IndexHNSWFlat(len(embedding_matrix[0]), 8)
-        #         index_model.hnsw.efConstruction = 100
-        #         index_model.add(embedding_matrix)
-        #         index_model.hnsw.efSearch = 256
-        #         D, I = index_model.search(embedding_matrix, 50)
-        #         for i in range(len(D)):
-        #             for j in range(len(D[0])):
-        #                 s1 = ids[bucket[i]]
-        #                 s2 = ids[bucket[I[i][j]]]
-        #                 if s1 == s2:
-        #                     continue
-        #                 small = min(s1, s2)
-        #                 large = max(s1, s2)
-        #                 visit_token = (small, large)
-        #                 if visit_token in visited_set or visit_token in candidates:
-        #                     continue
-        #                 visited_set.add(visit_token)
-        #                 large_pairs.append((small, large, D[i][j]))
-    large_pairs.sort(key=lambda x: x[2])
-    large_pairs = large_pairs[:2000000 - len(mid_pairs) - len(candidates)]
-    large_pairs = [(x[0], x[1]) for x in large_pairs]
+                same_count = 0
+                for feature in features_list:
+                    if feature[index1] == feature[index2] != '0':
+                        same_count += 1
+                if key == 'intenso':
+                    if same_count >= 4:
+                        candidate_pairs.append((small, large, D[i][j]))
+                    elif product_list[index1] == product_list[index2] == 'basic' and same_count >= 3:
+                        candidate_pairs.append((small, large, D[i][j]))
+                    else:
+                        faiss_pairs.append((small, large, D[i][j]))
+                elif key == 'sandisk':
+                    if series_list[index1] == series_list[index2] == 'glide' and same_count >= 3 and capacity_list[
+                        index1] == capacity_list[index2] in ('256g', '512g', '1t', '2t'):
+                        candidate_pairs.append((small, large, D[i][j]))
+                    elif model_list[index1] == model_list[index2] == 'ext+' and same_count >= 3:
+                        candidate_pairs.append((small, large, D[i][j]))
+                    else:
+                        faiss_pairs.append((small, large, D[i][j]))
+                elif key == 'toshiba':
+                    if model_list[index1] == model_list[index2] == 'm401':
+                        candidate_pairs.append((small, large, D[i][j]))
+                    elif mem_list[index1] == mem_list[index2] == 'microsd' and product_list[index1] == product_list[
+                        index2] == 'x' and capacity_list[index1] == capacity_list[index2] == '64g' and same_count >= 4:
+                        candidate_pairs.append((small, large, D[i][j]))
+                    else:
+                        faiss_pairs.append((small, large, D[i][j]))
+                elif key == 'kingston':
+                    if series_list[index1] == series_list[index2] == 'ultimate' and same_count >= 3:
+                        candidate_pairs.append((small, large, D[i][j]))
+                    else:
+                        faiss_pairs.append((small, large, D[i][j]))
+                elif key == 'pny':
+                    if same_count >= 4:
+                        candidate_pairs.append((small, large, D[i][j]))
+                    else:
+                        faiss_pairs.append((small, large, D[i][j]))
+                else:
+                    if same_count >= 5:
+                        candidate_pairs.append((small, large, D[i][j]))
+                    else:
+                        faiss_pairs.append((small, large, D[i][j]))
+
+    if len(candidate_pairs) > max_limit:
+        candidate_pairs.sort(key=lambda x: x[2])
+        candidate_pairs = candidate_pairs[:max_limit]
+    else:
+        faiss_pairs.sort(key=lambda x: x[2])
+        faiss_pairs = faiss_pairs[:max_limit - len(candidate_pairs)]
+        candidate_pairs += faiss_pairs
+
+    candidate_pairs = [(x[0], x[1]) for x in candidate_pairs]
 
     # jaccard_similarities = []
     # s1 = set(bucket[i][1].split())
     # s2 = set(bucket[j][1].lower().split())
     # jaccard_similarities.append(len(s1.intersection(s2)) / max(len(s1), len(s2)))
     # candidates = [x for _, x in sorted(zip(jaccard_similarities, candidates), reverse=True)]
-    return list(candidates) + mid_pairs + large_pairs
+
+    # raw_data = pd.read_csv('X2.csv')
+    # gnd = pd.read_csv('Y2.csv')
+    # gnd['cnt'] = 0
+    # for idx in range(len(candidate_pairs)):
+    #     left_id = candidate_pairs[idx][0]
+    #     right_id = candidate_pairs[idx][1]
+    #     index = gnd[(gnd['lid'] == left_id) & (gnd['rid'] == right_id)].index.tolist()
+    #     if len(index) > 0:
+    #         if len(index) > 1:
+    #             raise Exception
+    #         gnd['cnt'][index[0]] += 1
+    #         if gnd['cnt'][index[0]] > 1:
+    #             print(index)
+    #     else:
+    #         # left_text = raw_data[raw_data['id'] == left_id]['name'].values[0]
+    #         # right_text = raw_data[raw_data['id'] == right_id]['name'].values[0]
+    #         # if left_text != right_text:
+    #         #     print(idx, left_id, right_id)
+    #         #     print(left_text, '|', right_text)
+    #         pass
+    # print('-----------------------------------------------------------------------------------------------')
+    # left = gnd[gnd['cnt'] == 0]
+    # for idx in left.index:
+    #     print(left['lid'][idx], ',', left['rid'][idx])
+    #     print(raw_data[raw_data['id'] == left['lid'][idx]]['name'].iloc[0], '|',
+    #           raw_data[raw_data['id'] == left['rid'][idx]]['name'].iloc[0])
+    # print('output pairs:\t', len(candidate_pairs))
+    # print('correct pairs:\t', sum(gnd['cnt']))
+    # print('recall:\t\t\t', sum(gnd['cnt']) / gnd.values.shape[0])
+
+    return candidate_pairs

@@ -61,6 +61,22 @@ def collate_fn(batch):
     return all_input_ids, all_input_mask, all_segment_ids
 
 
+def encode(model, sentences) -> np.array:
+    tokenizer = BertTokenizer.from_pretrained("./x2_model")
+    dataset = MyDataset(sentence=sentences, tokenizer=tokenizer)
+    dataloader = DataLoader(dataset=dataset, batch_size=256, collate_fn=collate_fn)
+    trained_embedding = []
+    for batch in dataloader:
+        input_ids_list, attention_mask_list, _ = batch
+        batch_embedding = model(input_ids=input_ids_list, attention_mask=attention_mask_list,
+                                encoder_type='fist-last-avg')
+        batch_embedding = batch_embedding.detach()
+        batch_embedding = F.normalize(batch_embedding, p=2, dim=1).numpy()
+        # trained_embedding=torch.cat((trained_embedding,batch_embedding),0)
+        trained_embedding.extend(batch_embedding)
+    return np.array(trained_embedding)
+
+
 def test(model, data, limit, column):
     sentences = data[column]
     tokenizer = BertTokenizer.from_pretrained("./x2_model")
@@ -79,26 +95,27 @@ def test(model, data, limit, column):
     #     token_type_list.append(inputs["token_type_ids"])
     # dataset=MyDataset(sentence=sentences,tokenizer=tokenizer)
     # dataloader=DataLoader(dataset=dataset,batch_size=32,collate_fn=collate_fn)
-    #input_ids_list,attention_mask_list,token_type_list=collate_fn(input_ids_list,attention_mask_list,token_type_list)
-    dataset=MyDataset(sentence=sentences,tokenizer=tokenizer)
-    dataloader=DataLoader(dataset=dataset,batch_size=256,collate_fn=collate_fn)
-    #input_ids_list,attention_mask_list,token_type_list=collate_fn(input_ids_list,attention_mask_list,token_type_list)
-    #trained_embedding=torch.Tensor()
-    trained_embedding=[]
+    # input_ids_list,attention_mask_list,token_type_list=collate_fn(input_ids_list,attention_mask_list,token_type_list)
+    dataset = MyDataset(sentence=sentences, tokenizer=tokenizer)
+    dataloader = DataLoader(dataset=dataset, batch_size=256, collate_fn=collate_fn)
+    # input_ids_list,attention_mask_list,token_type_list=collate_fn(input_ids_list,attention_mask_list,token_type_list)
+    # trained_embedding=torch.Tensor()
+    trained_embedding = []
     for batch in dataloader:
-        input_ids_list,attention_mask_list,_=batch
-        batch_embedding=model(input_ids=input_ids_list, attention_mask=attention_mask_list, encoder_type='fist-last-avg')
-        batch_embedding=batch_embedding.detach()
-        batch_embedding=F.normalize(batch_embedding,p=2,dim=1).numpy()
-        #trained_embedding=torch.cat((trained_embedding,batch_embedding),0)
+        input_ids_list, attention_mask_list, _ = batch
+        batch_embedding = model(input_ids=input_ids_list, attention_mask=attention_mask_list,
+                                encoder_type='fist-last-avg')
+        batch_embedding = batch_embedding.detach()
+        batch_embedding = F.normalize(batch_embedding, p=2, dim=1).numpy()
+        # trained_embedding=torch.cat((trained_embedding,batch_embedding),0)
         trained_embedding.extend(batch_embedding)
         print(len(trained_embedding))
-    #trained_embedding = model(input_ids=input_ids_list, attention_mask=attention_mask_list, encoder_type='fist-last-avg')
-    
-    numpy_embedding=np.array(trained_embedding)
-    topk=50
-    index=faiss.IndexHNSWFlat(len(numpy_embedding[0]),8)
-    index.hnsw.efConstruction=100
+    # trained_embedding = model(input_ids=input_ids_list, attention_mask=attention_mask_list, encoder_type='fist-last-avg')
+
+    numpy_embedding = np.array(trained_embedding)
+    topk = 50
+    index = faiss.IndexHNSWFlat(len(numpy_embedding[0]), 8)
+    index.hnsw.efConstruction = 100
     index.add(numpy_embedding)
     index.hnsw.efSearch = 256
     D, I = index.search(numpy_embedding, topk)
@@ -208,5 +225,5 @@ if __name__ == "__main__":
             train_pair = test(my_model, train_data, train_limit, 'title')
             origin_pair = test(my_model, origin_data, origin_limit, 'name')
             print("Model: %s, Test set recall: %f, Train set recall %f, Origin data recall: %f" % (
-            model_path, recall_calculation(test_pair, test_gnd), recall_calculation(train_pair, train_gnd)
-            , recall_calculation(origin_pair, origin_gnd)))
+                model_path, recall_calculation(test_pair, test_gnd), recall_calculation(train_pair, train_gnd)
+                , recall_calculation(origin_pair, origin_gnd)))
