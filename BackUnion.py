@@ -46,6 +46,6 @@ if __name__ == '__main__':
         print()
         print(result[1])
         for content in result[2]:
-            print(content[0], content[1])
+            print(content[0])
         print()
     print(cnt)
