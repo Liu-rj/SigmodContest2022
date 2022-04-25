@@ -10,10 +10,10 @@ from transformers import BertConfig, BertModel
 
 
 class Model(nn.Module):
-    def __init__(self):
+    def __init__(self,configPath,bertPath):
         super(Model, self).__init__()
-        self.config = BertConfig.from_pretrained('./prajjwal1_bert-tiny/config.json')
-        self.bert = BertModel.from_pretrained('./prajjwal1_bert-tiny/pytorch_model.bin', config=self.config)
+        self.config = BertConfig.from_pretrained(configPath)
+        self.bert = BertModel.from_pretrained(bertPath, config=self.config)
 
     def forward(self, input_ids, attention_mask, encoder_type='fist-last-avg'):
         '''

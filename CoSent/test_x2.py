@@ -63,7 +63,7 @@ def collate_fn(batch):
 
 def test(model, data, limit, column):
     sentences = data[column]
-    tokenizer = BertTokenizer.from_pretrained("./x2_model")
+    tokenizer = BertTokenizer.from_pretrained("./prajjwal1_bert-tiny")
     # input_ids_list=[]
     # attention_mask_list=[]
     # token_type_list=[]
@@ -180,14 +180,16 @@ def save_output(X1_candidate_pairs,
 if __name__ == "__main__":
     mode = 0
     if mode == 0:
-        model_path = "./x2_model/base_model_epoch_{}.bin".format(38)
-        my_model = Model()
+        model_path = "./x1_model/base_model_epoch_{}.bin".format(62)
+        my_model = Model("./prajjwal1_bert-tiny/config.json","./prajjwal1_bert-tiny/pytorch_model.bin")
         my_model.load_state_dict(torch.load(model_path, map_location='cpu'))
         raw_data = pd.read_csv("X1.csv")
-        x1_pair = []
+        raw_data['title']=raw_data.title.str.lower()
+        x1_pair = test(my_model,raw_data,1000000,'title')
         raw_data = pd.read_csv("X2.csv")
         raw_data['name'] = raw_data.name.str.lower()
-        x2_pair = test(my_model, raw_data, 2000000, 'name')
+        #x2_pair = test(my_model, raw_data, 2000000, 'name')
+        x2_pair=[]
         save_output(x1_pair, x2_pair)
         print(time.time())
     elif mode == 1:
