@@ -57,24 +57,23 @@ class Model(nn.Module):
             pooler_output = output.pooler_output  # [b,d]
             return pooler_output
 
+
 class myTokenizer():
-    def __init__(self,tokenizer_path:str) -> None:
+    def __init__(self, tokenizer_path: str) -> None:
         self.config = AutoConfig.from_pretrained(tokenizer_path)
         self.tokenizer = AutoTokenizer.from_pretrained(tokenizer_path)
-        self.max_seq_length=512
-    
+        self.max_seq_length = 512
+
     def tokenize(self, texts):
         output = {}
         to_tokenize = [texts]
 
-
-        #strip
+        # strip
         to_tokenize = [[str(s).strip() for s in col] for col in to_tokenize]
 
-
-        output=self.tokenizer(*to_tokenize, padding=True, truncation='longest_first', return_tensors="pt",max_length=self.max_seq_length)
+        output = self.tokenizer(*to_tokenize, padding=True, truncation='longest_first', return_tensors="pt",
+                                max_length=self.max_seq_length)
         return output
-
 
 
 class MyDataset(Dataset):
@@ -157,10 +156,10 @@ def collate_fn(batch):
 #     return all_input_ids, all_input_mask
 #     # return input_ids,attention_mask
 
-def encode(model, sentences, tokenizer:myTokenizer) -> np.array:
+def encode(model, sentences, tokenizer: myTokenizer) -> np.array:
     # length_sorted_idx = np.argsort([-len(sen) for sen in sentences])
     # sentences_sorted = [sentences[idx] for idx in length_sorted_idx]
-    sentences_sorted=sentences
+    sentences_sorted = sentences
     # dataset = MyDataset(sentence=sentences_sorted, tokenizer=tokenizer)
     # dataloader = DataLoader(dataset=dataset, batch_size=256, collate_fn=collate_fn)
     trained_embedding = []
@@ -193,11 +192,11 @@ def encode(model, sentences, tokenizer:myTokenizer) -> np.array:
     #     batch_embedding = torch.nn.functional.normalize(batch_embedding, p=2, dim=1).numpy()
     #     trained_embedding.extend(batch_embedding)
 
-    for start_index in range(0,len(sentences_sorted),batch_size):
-        sentence_batch=sentences_sorted[start_index:start_index+batch_size]
-        features=tokenizer.tokenize(texts=sentence_batch)
-        input_ids_list=features['input_ids']
-        attention_mask_list=features['attention_mask']
+    for start_index in range(0, len(sentences_sorted), batch_size):
+        sentence_batch = sentences_sorted[start_index:start_index + batch_size]
+        features = tokenizer.tokenize(texts=sentence_batch)
+        input_ids_list = features['input_ids']
+        attention_mask_list = features['attention_mask']
         batch_embedding = model(input_ids=input_ids_list, attention_mask=attention_mask_list,
                                 encoder_type='fist-last-avg')
         batch_embedding = batch_embedding.detach()

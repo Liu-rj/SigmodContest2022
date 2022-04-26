@@ -25,7 +25,7 @@ def extract_x2(data: pd.DataFrame) -> pd.DataFrame:
     families = {
         'sandisk': ['cruizer', 'tarjeta', 'glide', 'select', 'extern', 'origin', 'transmemory', 'react', 'memo', 'kart',
                     'pendrive', 'car', 'serie', 'line', 'extreme', 'cruzer', 'ultra', 'micro', 'traveler',
-                    'hyperx', 'sd', 'usb', 'adapt', 'wex', 'flash'],
+                    'hyperx', 'adapt', 'wex', 'flash'],
         'lexar': ['ultra', 'xqd', 'jumpdrive', 'micro', 'pendrive', 'sd', 'tarjeta', 'jumpdrive', 'usb', 'memo',
                   'extreme', 'blade', 'car', 'scheda', 'veloc', 'react', 'adapt', 'secure', 'premium', 'wex',
                   'transmemo', 'alu', 'datatravel', 'canvas', 'flair', 'hyperx', 'cruzer', 'flash'],
@@ -83,47 +83,6 @@ def extract_x2(data: pd.DataFrame) -> pd.DataFrame:
         if len(size_model) > 0:
             capacity = str(size_model[0]).replace(' ', '').replace('b', '').replace('o', '')
 
-        pattern = set()
-        brand_list = set()
-        for b in brands:
-            if b in name_info:
-                brand_list.add(b)
-                found = False
-                for ele in sorted(name_info.split()):
-                    for sn in families[b]:
-                        if sn in ele:
-                            pattern.add(sn)
-                            found = True
-                            break
-                    if found:
-                        break
-        if len(brand_list) > 0:
-            brand = ''.join(sorted(list(brand_list)))
-        else:
-            if 'tos' in name_info:
-                brand = 'toshiba'
-            elif 'tesco' in name_info:
-                brand = 'tesco'
-            elif 'cruizer glide' in name_info:
-                brand = 'sandisk'
-            found = False
-            for ele in sorted(name_info.split()):
-                for sn in families['0']:
-                    if sn in ele:
-                        pattern.add(sn)
-                        found = True
-                        break
-                if found:
-                    break
-        if len(pattern) > 0:
-            series = ''.join(sorted(list(pattern)))
-            # series = sorted(list(pattern))[0]
-
-        pattern = set(re.findall(r'\w+-\w+', name_info))
-        if len(pattern) > 0:
-            pattern = sorted([str(x) for x in pattern])
-            pat_hb = ''.join(pattern)
-
         mem_model = re.search(r'ssd', name_info)
         if mem_model is None:
             mem_model = re.search(r'micro[- ]?sd[hx]?c?', name_info)
@@ -151,9 +110,52 @@ def extract_x2(data: pd.DataFrame) -> pd.DataFrame:
         if 'adapt' in name_info and mem_type == '0':
             mem_type = 'microsd'
 
-        # item_code_model = re.search(r'\((mk)?[0-9]{6,10}\)', name_info)
-        # if item_code_model is not None:
-        #     item_code = item_code_model.group()[1:-1]
+        pattern_hb = re.search(r'\w+-\w+', name_info)
+        if pattern_hb is not None:
+            pat_hb = pattern_hb.group()
+
+        pattern = set()
+        brand_list = set()
+        for b in brands:
+            if b in name_info:
+                brand_list.add(b)
+                found = False
+                for ele in sorted(name_info.split()):
+                    for sn in families[b]:
+                        if sn in ele:
+                            pattern.add(sn)
+                            found = True
+                            break
+                    if found:
+                        break
+        if len(brand_list) > 0:
+            brand = ''.join(sorted(list(brand_list)))
+        else:
+            if 'tos' in name_info:
+                brand = 'toshiba'
+            elif 'tesco' in name_info:
+                brand = 'tesco'
+            elif 'cruizer glide' in name_info:
+                brand = 'sandisk'
+            elif 'hyperx' in name_info and capacity == '512g' and mem_type == 'usb':
+                brand = 'kingston'
+            elif pat_hb == 'uhs-i' and mem_type == 'microsd' and capacity == '8g' and 'adapter' in name_info:
+                brand = 'kingston'
+            found = False
+            for ele in sorted(name_info.split()):
+                for sn in families['0']:
+                    if sn in ele:
+                        pattern.add(sn)
+                        found = True
+                        break
+                if found:
+                    break
+        if len(pattern) > 0:
+            series = ''.join(sorted(list(pattern)))
+
+        item_code_model = re.search(r'\((mk)?[0-9]{6,10}\)', name_info)
+        if item_code_model is not None:
+            item_code = item_code_model.group()[1:-1]
 
         if brand == "intenso":
             model_model = re.search(r'[0-9]{7}', name_info)
@@ -270,7 +272,7 @@ def extract_x2(data: pd.DataFrame) -> pd.DataFrame:
                 model = 'ultra+'
                 if '128 go' in name_info or capacity == '0':
                     capacity = '32g'
-            if 'adapt' in name_info and mem_type != '0':
+            if 'adapt' in name_info and mem_type == '0':
                 mem_type = 'microsd'
             if mem_type == '0':
                 if 'drive' in name_info:
@@ -288,6 +290,10 @@ def extract_x2(data: pd.DataFrame) -> pd.DataFrame:
                     mem_type = 'sdxc'
             if 'sandisk - ' + capacity + ' extreme en fnac.es' in name_info:
                 mem_type = 'usb'
+            if model == 'dual' and capacity == '0':
+                capacity = '64g'
+            if 'otg' in name_info and product_type == '0':
+                product_type = 'otg'
         elif brand == 'pny':
             type_model = re.search(r'att.*?[3-4]', name_info)
             if type_model is not None:
@@ -304,16 +310,14 @@ def extract_x2(data: pd.DataFrame) -> pd.DataFrame:
                     mem_type = 'usb'
                 elif 'ultimate' in name_info:
                     mem_type = 'sd'
-            model_model = re.search(
-                r'(dt[i1]0?1?)|(data[ ]?t?travel?ler)', name_info)
+            model_model = re.search(r'(dt[i1]0?1?)|(data[ ]?t?travel?ler)', name_info)
             if model_model is not None:
                 model = 'data traveler'
                 type_model = re.search(r'(g[234])|(gen[ ]?[234])', name_info)
                 if type_model is not None:
                     product_type = type_model.group()[-1:].replace('g', '').replace('gen', '')
             else:
-                type_model = re.search(
-                    r'[\s]((g[234])|(gen[ ]?[234]))[\s]', name_info)
+                type_model = re.search(r'[\s]((g[234])|(gen[ ]?[234]))[\s]', name_info)
                 if type_model is not None:
                     product_type = type_model.group().strip()[-1:].replace('g', '').replace('gen', '')
                     model = 'data traveler'
@@ -321,6 +325,28 @@ def extract_x2(data: pd.DataFrame) -> pd.DataFrame:
                 mem_type = 'usb'
             if 'ultimate' in name_info:
                 series = 'ultimate'
+            if product_type == '0':
+                type_model = re.search(r'\w+-\w+', name_info)
+                if type_model is not None:
+                    product_type = type_model.group()
+                    if product_type == 'flash-speicherkarte' and 'uhs' in name_info:
+                        product_type = 'uhs-i'
+                    elif product_type == 'high-speed':
+                        product_type = 'uhs-i'
+            if model == '0':
+                model_model = re.search(r'[ck]lasse?\s?\d+\s', name_info)
+                if model_model is not None:
+                    model = 'class' + re.search(r'\d+', model_model.group()).group()
+            if product_type == '0':
+                if 'flash' in name_info:
+                    product_type = 'flash'
+                elif 'plus' in name_info:
+                    product_type = 'plus'
+            if mem_type == '0':
+                if capacity == '128g' and 'Speicherkarte' in name_info and 'uhs' in name_info:
+                    mem_type = 'sd'
+            if capacity == '128g' and 'uhs-i' in name_info and mem_type == 'sd':
+                model = 'class3'
         elif brand == 'samsung':
             if 'lte' in name_info:
                 model_model = re.search(
@@ -432,12 +458,17 @@ def extract_x2(data: pd.DataFrame) -> pd.DataFrame:
                 model = 'u202'
             if 'en fnac.es' in name_info and 'toshiba usb 3.0' in name_info and 'pendrive / memoria usb' in name_info:
                 model = 'ex'
-            if model == 'n101':
-                model = '0'
+            # if model == 'n101':
+            #     model = '0'
             if 'memoria toshiba exceria microsdxc clase 10 uhs-i class 3 16gb' in name_info:
                 capacity = '64g'
+            if 'sd-xpro32uhs2' in name_info:
+                series = 'exceria'
+            if model == '0' and 'uhs' in name_info:
+                model = 'uhs'
         elif brand == 'transcend':
-            pass
+            if model == '0' and 'uhs' in name_info:
+                model = 'uhs'
 
         result.append([
             data['id'][row],
