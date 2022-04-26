@@ -1,11 +1,10 @@
 import csv
-
 from handler import handle
 from collections import defaultdict
 from tqdm import tqdm
 import pandas as pd
 import re
-
+import sentence_transformers
 Flag = True
 
 #
@@ -144,8 +143,8 @@ def save_output(X1_candidate_pairs,
         X2_candidate_pairs = X2_candidate_pairs[:expected_cand_size_X2]
 
     # make sure to include exactly 1000000 pairs for dataset X1 and 2000000 pairs for dataset X2
-    if len(X1_candidate_pairs) < expected_cand_size_X1+expected_cand_size_X2:
-        X1_candidate_pairs.extend([(0, 0)] * (expected_cand_size_X1+expected_cand_size_X2-len(X1_candidate_pairs)))
+    # if len(X1_candidate_pairs) < expected_cand_size_X1+expected_cand_size_X2:
+    #     X1_candidate_pairs.extend([(0, 0)] * (expected_cand_size_X1+expected_cand_size_X2-len(X1_candidate_pairs)))
     # if len(X2_candidate_pairs) < expected_cand_size_X2:
     #     X2_candidate_pairs.extend([(0, 0)] * (expected_cand_size_X2 - len(X2_candidate_pairs)))
 
