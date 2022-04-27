@@ -43,7 +43,14 @@ families_brand = {
     'satellite':{'toshiba'}
 }
 
+pc_aliases = {
+    "2320": "3435", "v7482": "v7582", "810g2": "810", "2338": "2339",
+    "346058u": "3460", "4291": "4290", "4287": "4290", "0622": "0627"}
 
+
+# model_family_2_pcname = {
+#     "4010u aspire": "e1572"
+# }
 def clean(data)->pd.DataFrame:
     """Clean X2.csv data to a readable format.
     :param data: X2.csv
@@ -281,7 +288,9 @@ def clean(data)->pd.DataFrame:
                     if result_name_family is not None:
                         name_family = result_name_family.group().strip()
                         break
-
+        pc_name = name_number
+        if pc_name in pc_aliases.keys():
+            pc_name = pc_aliases[pc_name]
         result.append([
             instance_ids[row][0],
             brand,
@@ -291,7 +300,7 @@ def clean(data)->pd.DataFrame:
             cpu_frequency,
             ram_capacity,
             display_size,
-            name_number,
+            pc_name,
             name_family,
             titles[row][0].lower()
         ])

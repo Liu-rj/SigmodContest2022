@@ -26,6 +26,8 @@ def x1_test(data: pd.DataFrame, limit: int, model_path: str) -> list:
     candidate_pairs: List[Tuple[int, int, float]] = []
     ram_capacity_list=features['ram_capacity'].values
     cpu_model_list=features['cpu_model'].values
+    pc_name_list = features['pc_name'].values
+    family_list=features['family'].values
     buckets=defaultdict(list)
     for idx in range(data.shape[0]):
         brands=features['brand'][idx]
@@ -41,10 +43,10 @@ def x1_test(data: pd.DataFrame, limit: int, model_path: str) -> list:
         cluster=buckets[key]
         embedding_matrix = encodings[cluster]
         k = min(topk, len(cluster))
-        index_model = faiss.IndexHNSWFlat(len(embedding_matrix[0]), 8)
+        index_model = faiss.IndexHNSWFlat(len(embedding_matrix[0]), 16)
         index_model.hnsw.efConstruction = 100
         index_model.add(embedding_matrix)
-        index_model.hnsw.efSearch = 256
+        index_model.hnsw.efSearch = 384
         D, I = index_model.search(embedding_matrix, k)
         for i in range(len(D)):
             for j in range(len(D[0])):
@@ -61,9 +63,13 @@ def x1_test(data: pd.DataFrame, limit: int, model_path: str) -> list:
                     continue
                 visited_set.add(visit_token)
                 if not (ram_capacity_list[index1]=='0' or ram_capacity_list[index2]=='0' or ram_capacity_list[index1]==ram_capacity_list[index2]):
-                    continue
+                    if family_list[index1]!='x220' and family_list[index2]!='x220':
+                        continue
                 intersect=cpu_model_list[index1].intersection(cpu_model_list[index2])
                 if not (len(cpu_model_list[index1])==0 or len(cpu_model_list[index2])==0 or len(intersect)!=0):
+                    continue
+
+                if not (len(pc_name_list[index1])==0 or len(pc_name_list[index2])==0 or pc_name_list[index1]==pc_name_list[index2]):
                     continue
                 candidate_pairs.append((small, large, D[i][j]))
 
@@ -306,6 +312,12 @@ if __name__ == '__main__':
                 print(left['lid'][idx], ',', left['rid'][idx])
                 print(raw_data[raw_data['id'] == left['lid'][idx]]['title'].iloc[0], '|||',
                       raw_data[raw_data['id'] == left['rid'][idx]]['title'].iloc[0])
+                print(features[features['instance_id'] == left['lid'][idx]]['brand'].iloc[0], '|||',
+                        features[features['instance_id'] == left['rid'][idx]]['brand'].iloc[0])
+                print(features[features['instance_id'] == left['lid'][idx]]['ram_capacity'].iloc[0], '|||',
+                    features[features['instance_id'] == left['rid'][idx]]['ram_capacity'].iloc[0])
+                print(features[features['instance_id'] == left['lid'][idx]]['pc_name'].iloc[0], '|||',
+                        features[features['instance_id'] == left['rid'][idx]]['pc_name'].iloc[0])
         print("Model: %s, test recall: %f, train recall: %f, origin recall: %f" % (
             path, recall_calculation(test_pairs, test_gnd), recall_calculation(train_pairs, train_gnd),
             recall_calculation(origin_pairs, origin_gnd)))
