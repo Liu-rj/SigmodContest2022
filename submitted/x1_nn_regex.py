@@ -43,10 +43,10 @@ def x1_test(data: pd.DataFrame, limit: int, model_path: str) -> list:
         cluster=buckets[key]
         embedding_matrix = encodings[cluster]
         k = min(topk, len(cluster))
-        index_model = faiss.IndexHNSWFlat(len(embedding_matrix[0]), 16)
+        index_model = faiss.IndexHNSWFlat(len(embedding_matrix[0]), 8)
         index_model.hnsw.efConstruction = 100
         index_model.add(embedding_matrix)
-        index_model.hnsw.efSearch = 384
+        index_model.hnsw.efSearch = 256
         D, I = index_model.search(embedding_matrix, k)
         for i in range(len(D)):
             for j in range(len(D[0])):
@@ -69,7 +69,7 @@ def x1_test(data: pd.DataFrame, limit: int, model_path: str) -> list:
                 if not (len(cpu_model_list[index1])==0 or len(cpu_model_list[index2])==0 or len(intersect)!=0):
                     continue
 
-                if not (len(pc_name_list[index1])==0 or len(pc_name_list[index2])==0 or pc_name_list[index1]==pc_name_list[index2]):
+                if not (pc_name_list[index1]=='0' or pc_name_list[index2]=='0' or pc_name_list[index1]==pc_name_list[index2]):
                     continue
                 candidate_pairs.append((small, large, D[i][j]))
 
