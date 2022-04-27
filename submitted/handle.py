@@ -57,17 +57,18 @@ def handle(dataset: pd.DataFrame):
         family = row['family']
         title = row['title']
         pc = {}
-        if brand in clusters.keys():
-            clusters[brand].append(index)
-        else:
-            clusters[brand] = [index]
 
-        # if (cpu_model + ' ' + family) in model_family_2_pcname.keys():
-        #     pc_name = model_family_2_pcname[(cpu_model + ' ' + family)]
-        #
-        # if pc_name in pc_aliases.keys():
-        #     pc_name = pc_aliases[pc_name]
-        #
+        # if brand in clusters.keys():
+        #     clusters[brand].append(index)
+        # else:
+        #     clusters[brand] = [index]
+
+        if (cpu_model + ' ' + family) in model_family_2_pcname.keys():
+            pc_name = model_family_2_pcname[(cpu_model + ' ' + family)]
+
+        if pc_name in pc_aliases.keys():
+            pc_name = pc_aliases[pc_name]
+
         # if brand in cpu_model_aliases.keys():
         #     if cpu_model in cpu_model_aliases[brand].keys():
         #         cpu_model = cpu_model_aliases[brand][cpu_model]

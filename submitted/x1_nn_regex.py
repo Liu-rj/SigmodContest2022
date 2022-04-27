@@ -6,6 +6,7 @@ from tqdm import tqdm
 from typing import *
 from collections import defaultdict
 from handle import handle
+from clean import clean
 
 
 def recall_calculation(predict: list, gnd: pd.DataFrame):
@@ -17,15 +18,27 @@ def recall_calculation(predict: list, gnd: pd.DataFrame):
 
 
 def x1_test(data: pd.DataFrame, limit: int, model_path: str) -> list:
-    clusters = handle(data)
+    # clusters = handle(data)
+    features=clean(data)
     model = SentenceTransformer(model_path, device='cpu')
     encodings = model.encode(sentences=data['title'], batch_size=256, normalize_embeddings=True)
     topk = 50
     candidate_pairs: List[Tuple[int, int, float]] = []
+    ram_capacity_list=features['ram_capacity'].values
+    cpu_model_list=features['cpu_model'].values
+    buckets=defaultdict(list)
+    for idx in range(data.shape[0]):
+        brands=features['brand'][idx]
+        for brand in brands:
+            buckets[brand].append(idx)
+        if len(brands)==0:
+            buckets['0'].append(idx)
     visited_set = set()
     ids = data['id'].values
-    for key in clusters:
-        cluster = clusters[key]
+    # for key in clusters:
+    #     cluster = clusters[key]
+    for key in buckets:
+        cluster=buckets[key]
         embedding_matrix = encodings[cluster]
         k = min(topk, len(cluster))
         index_model = faiss.IndexHNSWFlat(len(embedding_matrix[0]), 8)
@@ -35,8 +48,10 @@ def x1_test(data: pd.DataFrame, limit: int, model_path: str) -> list:
         D, I = index_model.search(embedding_matrix, k)
         for i in range(len(D)):
             for j in range(len(D[0])):
-                s1 = ids[cluster[i]]
-                s2 = ids[cluster[I[i][j]]]
+                index1=cluster[i]
+                index2=cluster[I[i][j]]
+                s1 = ids[index1]
+                s2 = ids[index2]
                 if s1 == s2:
                     continue
                 small = min(s1, s2)
@@ -45,33 +60,38 @@ def x1_test(data: pd.DataFrame, limit: int, model_path: str) -> list:
                 if visit_token in visited_set:
                     continue
                 visited_set.add(visit_token)
+                if not (ram_capacity_list[index1]=='0' or ram_capacity_list[index2]=='0' or ram_capacity_list[index1]==ram_capacity_list[index2]):
+                    continue
+                intersect=cpu_model_list[index1].intersection(cpu_model_list[index2])
+                if not (len(cpu_model_list[index1])==0 or len(cpu_model_list[index2])==0 or len(intersect)!=0):
+                    continue
                 candidate_pairs.append((small, large, D[i][j]))
 
-    x11_pairs = block_with_attr(raw_data, attr="title")
-    for (x1, x2) in x11_pairs:
-        vector1 = encodings[x1]
-        vector2 = encodings[x2]
-        distance = 0
-        for k in range(len(vector1)):
-            distance += (vector1[k]-vector2[k])**2
-        small=min(ids[x1],ids[x2])
-        large=max(ids[x1],ids[x2])
-        visit_token=str(small)+" "+str(large)
-        if visit_token not in visited_set:
-            candidate_pairs.append((small, large, distance))
-            visited_set.add(visit_token)
+    # x11_pairs = block_with_attr(raw_data, attr="title")
+    # for (x1, x2) in x11_pairs:
+    #     vector1 = encodings[x1]
+    #     vector2 = encodings[x2]
+    #     distance = 0
+    #     for k in range(len(vector1)):
+    #         distance += (vector1[k]-vector2[k])**2
+    #     small=min(ids[x1],ids[x2])
+    #     large=max(ids[x1],ids[x2])
+    #     visit_token=str(small)+" "+str(large)
+    #     if visit_token not in visited_set:
+    #         candidate_pairs.append((small, large, distance))
+    #         visited_set.add(visit_token)
 
     candidate_pairs.sort(key=lambda x: x[2])
     candidate_pairs = candidate_pairs[:limit]
 
     output = list(map(lambda x: (x[0], x[1]), candidate_pairs))
 
-    predict = output
-    # cnt = 0
-    gnd = pd.read_csv("../Y1.csv")
-    for it in gnd:
-        if it not in predict:
-            print(it)
+    # predict = output
+    # # cnt = 0
+    # gnd = pd.read_csv("../Y1.csv")
+    # for it in gnd:
+    #     if it not in predict:
+    #         print(it)
     # for i in range(len(predict)):
     #     if not gnd[(gnd['lid'] == predict[i][0]) & (gnd['rid'] == predict[i][1])].empty:
     #         cnt += 1
@@ -189,7 +209,7 @@ def block_with_attr(X, attr):  # replace with your logic.
 
 
 def save_output(X1_candidate_pairs,
-                X2_candidate_pairs):  # save the candset for both datasets to a SINGLE file output.csv
+                X2_candidate_pairs):  # save the candset for both datasets to a SINGLE file output.csvcpu_model=set(list(map(lambda x:x[1:],cpu_model_list)))
     expected_cand_size_X1 = 1000000
     expected_cand_size_X2 = 2000000
 
@@ -219,17 +239,20 @@ if __name__ == '__main__':
     if mode == 0:
         raw_data = pd.read_csv("X1.csv")
         raw_data['title'] = raw_data.title.str.lower()
-        x1_pairs = x1_test(raw_data, 2815, path)
+        x1_pairs = x1_test(raw_data, 1000000, path)
+        raw_data = pd.read_csv("X2.csv")
         save_output(x1_pairs, [])
+        print("success")
         # calculate
-        with open('../Y1.csv', 'r') as csv1, open('output.csv', 'r') as csv2:
-            import1 = csv1.readlines()
-            import2 = csv2.readlines()
-            same = 0
-            for row in import2:
-                if row in import1:
-                    same = same + 1
-            print(same / len(import1)*2815)
+        # with open('../Y1.csv', 'r') as csv1, open('output.csv', 'r') as csv2:
+        #     import1 = csv1.readlines()
+        #     import2 = csv2.readlines()
+        #     same = 0
+        #     for row in import2:
+        #         if row in import1:
+        #             same = same + 1
+        #     print(same / len(import1)*2815)
+
     elif mode == 1:
         test_data = pd.read_csv("../x1_test.csv")
         train_data = pd.read_csv("../x1_train.csv")
@@ -249,6 +272,40 @@ if __name__ == '__main__':
         test_pairs = x1_test(test_data, 488, path)
         train_pairs = x1_test(train_data, 2326, path)
         origin_pairs = x1_test(origin_data, 2814, path)
+        raw_data = pd.read_csv('../X1.csv')
+        gnd = pd.read_csv('../Y1.csv')
+        gnd['cnt'] = 0
+        features=clean(raw_data)
+        for idx in range(len(origin_pairs)):
+            left_id = origin_pairs[idx][0]
+            right_id = origin_pairs[idx][1]
+            index = gnd[(gnd['lid'] == left_id) & (gnd['rid'] == right_id)].index.tolist()
+            if len(index) > 0:
+                if len(index) > 1:
+                    raise Exception
+                gnd['cnt'][index[0]] += 1
+                if gnd['cnt'][index[0]] > 1:
+                    print(index)
+            else:
+                left_text = raw_data[raw_data['id'] == left_id]['title'].values[0]
+                right_text = raw_data[raw_data['id'] == right_id]['title'].values[0]
+                if left_text != right_text:
+                    print(idx, left_id, right_id)
+                    print(left_text, '|', right_text)
+                    print(features[features['instance_id']==left_id]['brand'].iloc[0],'|||',features[features['instance_id']==right_id]['brand'].iloc[0])
+                    print(features[features['instance_id'] == left_id]['family'].iloc[0], '|||',
+                          features[features['instance_id'] == right_id]['family'].iloc[0])
+                    print(features[features['instance_id'] == left_id]['cpu_model'].iloc[0], '|||',
+                          features[features['instance_id'] == right_id]['cpu_model'].iloc[0])
+                    print(features[features['instance_id']==left_id]['pc_name'].iloc[0],'|||',features[features['instance_id']==right_id]['pc_name'].iloc[0])
+                pass
+        print('-----------------------------------------------------------------------------------------------')
+        left = gnd[gnd['cnt'] == 0]
+        for idx in left.index:
+            # if features[features['instance_id']==left['lid'][idx]]['brand'].iloc[0]!=features[features['instance_id'] == left['rid'][idx]]['brand'].iloc[0]:
+                print(left['lid'][idx], ',', left['rid'][idx])
+                print(raw_data[raw_data['id'] == left['lid'][idx]]['title'].iloc[0], '|||',
+                      raw_data[raw_data['id'] == left['rid'][idx]]['title'].iloc[0])
         print("Model: %s, test recall: %f, train recall: %f, origin recall: %f" % (
             path, recall_calculation(test_pairs, test_gnd), recall_calculation(train_pairs, train_gnd),
             recall_calculation(origin_pairs, origin_gnd)))

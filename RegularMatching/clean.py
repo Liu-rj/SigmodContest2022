@@ -46,9 +46,7 @@ families_brand = {
 
 def clean(data):
     """Clean X2.csv data to a readable format.
-
     :param data: X2.csv
-
     :return:
         A DataFrame which contains following columns:
         {instance_id: instance_id of items;
@@ -62,7 +60,6 @@ def clean(data):
          pc_name: name information extract from title;
          name_family: family name of computer;
          title: title information of instance}
-
          it the value can't extract from the information given, '0' will be filled.
     """
 

@@ -1,5 +1,5 @@
 import pandas as pd
-from clean import clean
+from submitted.clean import clean
 
 pc_aliases = {
     "2320": "3435", "v7482": "v7582", "810g2": "810", "2338": "2339",
