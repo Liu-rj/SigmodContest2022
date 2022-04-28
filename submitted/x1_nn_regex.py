@@ -5,7 +5,7 @@ import faiss
 from tqdm import tqdm
 from typing import *
 from collections import defaultdict
-from handle import handle
+import time
 from clean import clean
 
 
@@ -39,6 +39,7 @@ def x1_test(data: pd.DataFrame, limit: int, model_path: str) -> list:
     ids = data['id'].values
     # for key in clusters:
     #     cluster = clusters[key]
+    # print(time.time())
     for key in buckets:
         cluster=buckets[key]
         embedding_matrix = encodings[cluster]
@@ -68,11 +69,11 @@ def x1_test(data: pd.DataFrame, limit: int, model_path: str) -> list:
                 intersect=cpu_model_list[index1].intersection(cpu_model_list[index2])
                 if not (len(cpu_model_list[index1])==0 or len(cpu_model_list[index2])==0 or len(intersect)!=0):
                     continue
-
-                if not (pc_name_list[index1]=='0' or pc_name_list[index2]=='0' or pc_name_list[index1]==pc_name_list[index2]):
-                    continue
+                if (family_list[index1]=='aspire' or family_list[index1]=='elitebook' or family_list[index1]=='x230' or family_list[index1]=='x1 carbon' or family_list[index1]=='inspiron')\
+                        and family_list[index1]==family_list[index2]:
+                    if not (pc_name_list[index1]=='0' or pc_name_list[index2]=='0' or pc_name_list[index1]==pc_name_list[index2]):
+                        continue
                 candidate_pairs.append((small, large, D[i][j]))
-
     # x11_pairs = block_with_attr(raw_data, attr="title")
     # for (x1, x2) in x11_pairs:
     #     vector1 = encodings[x1]
@@ -321,3 +322,18 @@ if __name__ == '__main__':
         print("Model: %s, test recall: %f, train recall: %f, origin recall: %f" % (
             path, recall_calculation(test_pairs, test_gnd), recall_calculation(train_pairs, train_gnd),
             recall_calculation(origin_pairs, origin_gnd)))
+    elif mode==2:
+        raw_data=pd.read_csv("../million_x1.csv")
+        raw_data['title']=raw_data.title.str.lower()
+        import time
+        print(time.time())
+        out=x1_test(raw_data,1000000,path)
+    elif mode==3:
+        raw_data=pd.read_csv("../x1_sort.csv")
+        raw_data['title']=raw_data.title.str.lower()
+        features=clean(raw_data)
+        for i in range(raw_data.shape[0]):
+            if features['family'][i]=='inspiron':
+                print(raw_data['title'][i],",",raw_data['cluster'][i])
+                print(features['brand'][i])
+                print(features['pc_name'][i])

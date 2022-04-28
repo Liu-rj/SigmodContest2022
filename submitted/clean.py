@@ -76,6 +76,7 @@ def clean(data)->pd.DataFrame:
     titles = titles.values.tolist()
 
     result = []
+
     for row in range(len(instance_ids)):
         # title of each row
         if len(titles[row]) == 0:
@@ -138,7 +139,7 @@ def clean(data)->pd.DataFrame:
         if 'lenovo' in brand:
             # print(name_info)
             result_name_number = re.search(
-                r'[\- ][0-9]{4}[0-9a-zA-Z]{2}[0-9a-yA-Y](?![0-9a-zA-Z])', name_info) #
+                r'[\- ][0-9]{4}[0-9a-qs-zA-QS-Z][0-9a-zA-Z][0-9a-yA-Y](?![0-9a-zA-Z])', name_info) #
             if result_name_number is None:
                 result_name_number = re.search(
                     r'[\- ][0-9]{4}(?![0-9a-zA-Z])', name_info)
@@ -154,18 +155,28 @@ def clean(data)->pd.DataFrame:
             if result_name_number is None:
                 result_name_number = re.search(
                     r'15[\- ][a-zA-Z][0-9]{3}[a-zA-Z]{2}', name_info)
-            if result_name_number is None:
+            else:
+                name_number = result_name_number.group().lower().replace('-', '').replace(' ', '')
+            if name_number=='0':
                 result_name_number = re.search(r'[\s]810[\s](G2)?', name_info)
-            if result_name_number is None:
-                result_name_number = re.search(r'[0-9]{4}[mM]', name_info)
-            if result_name_number is None:
+                if result_name_number is not None:
+                    name_number = result_name_number.group().lower().replace('-', '').replace(' ', '')
+            if name_number=='0':
+                result_name_number = re.search(r"[^d0-9][\- ][0-9]{4}[mM]", name_info)
+                if result_name_number is not None:
+                    name_number = result_name_number.group()[1:].lower().replace('-', '').replace(' ', '')
+            if name_number=='0':
                 result_name_number = re.search(
                     r'((DV)|(NC))[0-9]{4}', name_info)
-            if result_name_number is None:
+                if result_name_number is not None:
+                    name_number = result_name_number.group().lower().replace('-', '').replace(' ', '')
+            if name_number=='0':
                 result_name_number = re.search(r'[0-9]{4}DX', name_info)
-            if result_name_number is not None:
-                # print(result_name_number.group())
-                name_number = result_name_number.group().lower().replace('-', '').replace(' ', '')
+                if result_name_number is not None:
+                    name_number = result_name_number.group().lower().replace('-', '').replace(' ', '')
+            # if result_name_number is not None:
+            #     # print(result_name_number.group())
+            #     name_number = result_name_number.group().lower().replace('-', '').replace(' ', '')
         elif 'dell' in brand:
             # print(name_info)
             result_name_number = re.search(
@@ -177,8 +188,7 @@ def clean(data)->pd.DataFrame:
                 name_number = result_name_number.group().lower().replace('-', '')
         elif 'acer' in brand:
             # print(name_info)
-            result_name_number = re.search(
-                r'[A-Za-z][0-9][\- ][0-9]{3}', name_info)
+            result_name_number = re.search(r'[A-Za-z][0-9][\- ][0-9]{3}', name_info)
             if result_name_number is None:
                 result_name_number = re.search(r'AS[0-9]{4}', name_info)
             if result_name_number is None:
