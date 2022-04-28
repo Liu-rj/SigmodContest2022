@@ -62,7 +62,7 @@ if __name__ == '__main__':
                 break
     results.sort(key=lambda x: x[0])
     for result in results:
-        if result[0] != 'sandisk':
+        if result[0] != 'samsung':
             continue
         print()
         print(result[1])

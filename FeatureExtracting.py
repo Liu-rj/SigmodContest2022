@@ -79,6 +79,12 @@ def extract_x2(data: pd.DataFrame) -> pd.DataFrame:
         if 'intenso 3534490' in name_info:
             name_info = 'memoria usb - intenso -64gb usb 3.0 (3.1 gen 1) tipo a plata'
 
+        if name_info == 'pam??ová karta kingston sdhc 16gb uhs-i u1 (90r/45w)':
+            name_info = 'Kingston Technology SDA10/16GB 16GB UHS-I Ultimate Flash Card'.lower()
+
+        # if name_info == 'Karta pami?ci SDHC (Secure Digital High Capacity) gwarantuj?ca minimaln? szybko?? transferu 4 MB/s, kompatybilna tylko z urz?dzeniami obs?uguj?cymi standard SDHC. Obj?ta wieczyst? gwarancj?.'.lower():
+        #     name_info = 'Kingston Secure Digital High-Capacity 4GB'.lower()
+
         size_model = re.findall(r'[0-9]{1,4}[ ]*[gt][bo]', name_info)
         if len(size_model) > 0:
             capacity = str(size_model[0]).replace(' ', '').replace('b', '').replace('o', '')
@@ -115,14 +121,24 @@ def extract_x2(data: pd.DataFrame) -> pd.DataFrame:
             pat_hb = pattern_hb.group()
 
         name_split_list = sorted(name_info.split())
-        for name_debris in name_split_list:
-            for b in brands:
-                if b in name_debris:
-                    brand = b
+        brand_list = []
+        series_list = []
+        for b in brands:
+            if b in name_info:
+                brand_list.append(b)
+                found_series = False
+                for name_debris in name_split_list:
                     for sn in families[b]:
                         if sn in name_debris:
-                            series = sn
+                            series_list.append(sn)
+                            found_series = True
                             break
+                    if found_series:
+                        break
+        if len(brand_list) > 0:
+            brand = ''.join(sorted(brand_list))
+        if len(series_list) > 0:
+            series = ''.join(sorted(series_list))
         if brand == '0':
             if 'tos' in name_info:
                 brand = 'toshiba'
@@ -134,11 +150,17 @@ def extract_x2(data: pd.DataFrame) -> pd.DataFrame:
                 brand = 'kingston'
             elif pat_hb == 'uhs-i' and mem_type == 'microsd' and capacity == '8g' and 'adapter' in name_info:
                 brand = 'kingston'
+            elif 'g2' in name_info and mem_type == 'usb' and capacity == '16g':
+                brand = 'kingston'
+            found_series = False
             for name_debris in name_split_list:
-                for sn in families['0']:
+                for sn in families[brand]:
                     if sn in name_debris:
                         series = sn
+                        found_series = True
                         break
+                if found_series:
+                    break
 
         item_code_model = re.search(r'\((mk)?[0-9]{6,10}\)', name_info)
         if item_code_model is not None:
@@ -329,6 +351,10 @@ def extract_x2(data: pd.DataFrame) -> pd.DataFrame:
                 model_model = re.search(r'[ck]lasse?\s?\d+\s', name_info)
                 if model_model is not None:
                     model = 'class' + re.search(r'\d+', model_model.group()).group()
+                else:
+                    model_model = re.search(r'[uvw]+\d+[^gm)]', name_info)
+                    if model_model is not None:
+                        model = model_model.group()[:-1]
             if product_type == '0':
                 if 'flash' in name_info:
                     product_type = 'flash'
@@ -339,6 +365,10 @@ def extract_x2(data: pd.DataFrame) -> pd.DataFrame:
                     mem_type = 'sd'
             if capacity == '128g' and 'uhs-i' in name_info and mem_type == 'sd':
                 model = 'class3'
+            if capacity == '16g' and mem_type == 'sd' and product_type == 'uhs-i' and model == 'class10':
+                name_info = 'Kingston Carte SD Professionnelles SDA10/16GB UHS-I SDHC/SDXC Classe 10 - 16Go'.lower()
+            # if 'secure digital' in name_info and 'high-capacity' in name_info and '4g' in name_info:
+            #     name_info = 'Kingston - carte mémoire flash - 4 Go - SDHC'.lower()
         elif brand == 'samsung':
             if 'lte' in name_info:
                 model_model = re.search(
