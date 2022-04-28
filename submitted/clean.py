@@ -39,7 +39,7 @@ families_brand = {
     # 'chromebook': {'0'},
     'tecra':{'toshiba'},
     'touchsmart':{'hp'},
-    # 'dominator':'msi',
+     'dominator':{'msi'},
     'satellite':{'toshiba'}
 }
 
@@ -99,6 +99,8 @@ def clean(data)->pd.DataFrame:
         # lower_item = ' '.join(sorted(rowinfo.lower().split()))
         lower_item = rowinfo.lower()
         name_info = rowinfo
+        # if row==501:
+        #     a=1
 
         for b in brands:
             if b in lower_item:
@@ -109,12 +111,13 @@ def clean(data)->pd.DataFrame:
             brand['panasonic ']=None
 
         if len(brand)==0:
+            tmp = " ".join(sorted(lower_item.split()))
             for family in families_brand.keys():
                 # if family in lower_item and brand == '0':
-                if family in lower_item:
+                if family in tmp:
                     for b in families_brand[family]:
                         brand[b]=None
-                    # name_family = family
+                    name_family = family
                     # brand_list.append(brand)
                     break
 
@@ -148,7 +151,7 @@ def clean(data)->pd.DataFrame:
                 # print(name_info)
                 # print(result_name_number.group())
                 name_number = result_name_number.group().replace(
-                    '-', '').strip().lower()[:4]
+                    '-', '').strip().lower()
         elif 'hp' in brand:
             # print(name_info)
             result_name_number = re.search(r'[0-9]{4}[pPwW]', name_info)
@@ -297,10 +300,17 @@ def clean(data)->pd.DataFrame:
                     result_name_family = re.search(pattern, lower_item)
                     if result_name_family is not None:
                         name_family = result_name_family.group().strip()
+                        if name_family =="x1 carbon" and "thinkpad" not in lower_item:
+                            pos = result_name_family.span()[0]
+                            lower_item = lower_item[:pos]+"thinkpad "+lower_item[pos:]
                         break
         pc_name = name_number
         if pc_name in pc_aliases.keys():
+            # if pc_name=='346058u':
+            #     if pc_name in lower_item:
+            #         lower_item = lower_item.replace(pc_name,pc_aliases[pc_name])
             pc_name = pc_aliases[pc_name]
+
         result.append([
             instance_ids[row][0],
             brand,
@@ -312,7 +322,7 @@ def clean(data)->pd.DataFrame:
             display_size,
             pc_name,
             name_family,
-            titles[row][0].lower()
+            lower_item
         ])
         # 标注
         # names = ['brand', 'cpu_brand', 'cpu_core', 'cpu_model', 'cpu_frequency', 'ram_capacity', 'display_size',

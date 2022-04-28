@@ -20,23 +20,51 @@ def recall_calculation(predict: list, gnd: pd.DataFrame):
 def x1_test(data: pd.DataFrame, limit: int, model_path: str) -> list:
     # clusters = handle(data)
     features=clean(data)
+
+    identification_list=defaultdict(list)
+
+
     model = SentenceTransformer(model_path, device='cpu')
-    encodings = model.encode(sentences=data['title'], batch_size=256, normalize_embeddings=True)
+    encodings = model.encode(sentences=features['title'], batch_size=256, normalize_embeddings=True)
     topk = 50
     candidate_pairs: List[Tuple[int, int, float]] = []
     ram_capacity_list=features['ram_capacity'].values
     cpu_model_list=features['cpu_model'].values
     pc_name_list = features['pc_name'].values
+    cpu_core_list=features['cpu_core'].values
     family_list=features['family'].values
     buckets=defaultdict(list)
     for idx in range(data.shape[0]):
         brands=features['brand'][idx]
+        if pc_name_list[idx] != '0' and cpu_core_list[idx] != '0' and ram_capacity_list[idx] != '0' and len(cpu_model_list[idx])>0:
+            identity=[pc_name_list[idx],cpu_core_list[idx],ram_capacity_list[idx]]
+            identity.extend(list(cpu_model_list[idx]))
+            identity.sort()
+            identification_list[" ".join(identity)].append(idx)
         for brand in brands:
             buckets[brand].append(idx)
         if len(brands)==0:
             buckets['0'].append(idx)
     visited_set = set()
     ids = data['id'].values
+
+    regex_pairs=[]
+    for key in identification_list:
+        cluster=identification_list[key]
+        if len(cluster)>1:
+            for i in range(0,len(cluster)-1):
+                for j in range(i+1,len(cluster)):
+                    s1=ids[cluster[i]]
+                    s2=ids[cluster[j]]
+                    small=min(s1,s2)
+                    large=max(s1,s2)
+                    token=str(small)+" "+str(large)
+                    if token in visited_set:
+                        continue
+                    visited_set.add(token)
+                    regex_pairs.append((small,large))
+
+    limit=limit-len(regex_pairs)
     # for key in clusters:
     #     cluster = clusters[key]
     # print(time.time())
@@ -69,10 +97,11 @@ def x1_test(data: pd.DataFrame, limit: int, model_path: str) -> list:
                 intersect=cpu_model_list[index1].intersection(cpu_model_list[index2])
                 if not (len(cpu_model_list[index1])==0 or len(cpu_model_list[index2])==0 or len(intersect)!=0):
                     continue
-                if (family_list[index1]=='aspire' or family_list[index1]=='elitebook' or family_list[index1]=='x230' or family_list[index1]=='x1 carbon' or family_list[index1]=='inspiron')\
-                        and family_list[index1]==family_list[index2]:
-                    if not (pc_name_list[index1]=='0' or pc_name_list[index2]=='0' or pc_name_list[index1]==pc_name_list[index2]):
-                        continue
+                # if (family_list[index1]=='aspire' or family_list[index1]=='elitebook' or family_list[index1]=='x230' or family_list[index1]=='x1 carbon' or family_list[index1]=='inspiron')\
+                #         and family_list[index1]==family_list[index2]:
+                #     if not (pc_name_list[index1]=='0' or pc_name_list[index2]=='0' or pc_name_list[index1]==pc_name_list[index2]):
+                #         print(features['title'][index1]+"|||"+features['title'][index2])
+                #         continue
                 candidate_pairs.append((small, large, D[i][j]))
     # x11_pairs = block_with_attr(raw_data, attr="title")
     # for (x1, x2) in x11_pairs:
@@ -92,7 +121,7 @@ def x1_test(data: pd.DataFrame, limit: int, model_path: str) -> list:
     candidate_pairs = candidate_pairs[:limit]
 
     output = list(map(lambda x: (x[0], x[1]), candidate_pairs))
-
+    output.extend(regex_pairs)
     # predict = output
     # # cnt = 0
     # gnd = pd.read_csv("../Y1.csv")
@@ -277,8 +306,11 @@ if __name__ == '__main__':
         train_data = train_data[['id', 'title']]
         origin_data = origin_data[['id', 'title']]
         test_pairs = x1_test(test_data, 488, path)
+        print("1111---------------------------------------------")
         train_pairs = x1_test(train_data, 2326, path)
+        print("2222--------------------------------------------")
         origin_pairs = x1_test(origin_data, 2814, path)
+        print("3333---------------------------------------------")
         raw_data = pd.read_csv('../X1.csv')
         gnd = pd.read_csv('../Y1.csv')
         gnd['cnt'] = 0
@@ -311,8 +343,8 @@ if __name__ == '__main__':
         for idx in left.index:
             # if features[features['instance_id']==left['lid'][idx]]['brand'].iloc[0]!=features[features['instance_id'] == left['rid'][idx]]['brand'].iloc[0]:
                 print(left['lid'][idx], ',', left['rid'][idx])
-                print(raw_data[raw_data['id'] == left['lid'][idx]]['title'].iloc[0], '|||',
-                      raw_data[raw_data['id'] == left['rid'][idx]]['title'].iloc[0])
+                print(features[raw_data['id'] == left['lid'][idx]]['title'].iloc[0], '|||',
+                      features[raw_data['id'] == left['rid'][idx]]['title'].iloc[0])
                 print(features[features['instance_id'] == left['lid'][idx]]['brand'].iloc[0], '|||',
                         features[features['instance_id'] == left['rid'][idx]]['brand'].iloc[0])
                 print(features[features['instance_id'] == left['lid'][idx]]['ram_capacity'].iloc[0], '|||',
