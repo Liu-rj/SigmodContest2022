@@ -31,15 +31,12 @@ def save_output(pairs_x1, expected_size_x1, pairs_x2, expected_size_x2):
     output_df.to_csv('output.csv', index=False)
 
 
-brands_x1 = ['dell', 'lenovo', 'acer', 'asus', 'hp', 'panasonic', 'toshiba', 'sony', 'epson']
-
-
 if __name__ == '__main__':
     raw_data = pd.read_csv('X1.csv')
     raw_data = pd.read_csv('X2.csv')
     raw_data['name'] = raw_data.name.str.lower()
     features = extract_x2(raw_data)
-    candidates_x2 = block_x2(features, 4392)
+    candidates_x2 = block_x2(features, 2000000)
     candidates_x1 = []
     save_output(candidates_x1, 1000000, candidates_x2, 2000000)
     # output_df = pd.DataFrame(candidates_x2, columns=['left_instance_id', 'right_instance_id'])
