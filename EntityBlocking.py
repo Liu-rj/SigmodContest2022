@@ -87,6 +87,7 @@ def block_x2(dataset: pd.DataFrame, max_limit):
                 if len(result_re) == len(pattern.split('|')):
                     confident_buckets['_'.join(result_re)].append(idx)
                     break
+
         # elif brand_list[idx] == 'sandisk' and mem_list[idx] == 'microsd' and model_list[idx] == 'ext+' and \
         #         capacity_list[idx] == '16g': /////////////// will reduce recall by 0.001
         #     special_buckets['microsdhc sandisk extreme pro ' + capacity_list[idx]].append(idx)
@@ -116,23 +117,23 @@ def block_x2(dataset: pd.DataFrame, max_limit):
                 visited_set.add(visit_token)
                 candidate_pairs.append((small, large, 0))
 
-    # for key in special_buckets.keys():
-    #     bucket = special_buckets[key]
-    #     if len(bucket) > 10:
-    #         continue
-    #     for i in range(len(bucket)):
-    #         for j in range(i + 1, len(bucket)):
-    #             s1 = ids[bucket[i]]
-    #             s2 = ids[bucket[j]]
-    #             if s1 == s2:
-    #                 continue
-    #             small = min(s1, s2)
-    #             large = max(s1, s2)
-    #             visit_token = (small, large)
-    #             if visit_token in visited_set:
-    #                 continue
-    #             visited_set.add(visit_token)
-    #             candidate_pairs.append((small, large, 0))
+    for key in special_buckets.keys():
+        bucket = special_buckets[key]
+        if len(bucket) > 10:
+            continue
+        for i in range(len(bucket)):
+            for j in range(i + 1, len(bucket)):
+                s1 = ids[bucket[i]]
+                s2 = ids[bucket[j]]
+                if s1 == s2:
+                    continue
+                small = min(s1, s2)
+                large = max(s1, s2)
+                visit_token = (small, large)
+                if visit_token in visited_set:
+                    continue
+                visited_set.add(visit_token)
+                candidate_pairs.append((small, large, 0))
 
     faiss_all_pairs = []
     for key in buckets.keys():
