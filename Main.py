@@ -4,7 +4,7 @@ from EntityBlocking import block_x2
 from x1_nn_regex import *
 
 
-def gen_candidates(buckets) -> []:
+def gen_candidates(buckets) -> list:
     candidates_pair = []
     for bucket in buckets:
         if len(bucket[1]) <= 1:
@@ -33,7 +33,9 @@ def save_output(pairs_x1, expected_size_x1, pairs_x2, expected_size_x2):
 
 
 if __name__ == '__main__':
-    mode = 1
+    mode = 0
+    import os
+    os.environ['TOKENIZERS_PARALLELISM'] = 'True'
     if mode == 0:
         path = './fromstart_further_x1_berttiny_finetune_epoch20_margin0.01'
         raw_data = pd.read_csv("X1.csv")
