@@ -81,11 +81,13 @@ def block_x2(dataset: pd.DataFrame, max_limit):
 
     for idx in range(dataset.shape[0]):
         buckets[brand_list[idx]].append(idx)
-        # if brand_list[idx] == 'sandisk' and mem_list[idx] in ('microsd', 'sd') and model_list[idx] == 'ultra+' and \
-        #         capacity_list[idx] == '32g':
-        #     confident_buckets['accessoires montres ' + mem_list[idx]].append(idx)
-        # el
-        if hybrid_list[idx] != '0' or long_num_list[idx] != '0':
+        if brand_list[idx] == 'sandisk' and mem_list[idx] in ('microsd', 'sd') and model_list[idx] == 'ultra+' and \
+                capacity_list[idx] == '32g':
+            confident_buckets['accessoires montres ' + mem_list[idx]].append(idx)
+        elif brand_list[idx] == 'sandisk' and mem_list[idx] == 'microsd' and model_list[idx] == 'ext+' and \
+                capacity_list[idx] == '16g':  # will reduce recall by 0.001?
+            special_buckets['microsdhc sandisk extreme pro ' + capacity_list[idx]].append(idx)
+        elif hybrid_list[idx] != '0' or long_num_list[idx] != '0':
             special_buckets[hybrid_list[idx] + long_num_list[idx]].append(idx)
         elif brand_list[idx] == 'sandisk':
             for pattern in sandisk_patterns:
@@ -95,9 +97,6 @@ def block_x2(dataset: pd.DataFrame, max_limit):
                     confident_buckets['_'.join(result_re)].append(idx)
                     break
 
-        # elif brand_list[idx] == 'sandisk' and mem_list[idx] == 'microsd' and model_list[idx] == 'ext+' and \
-        #         capacity_list[idx] == '16g': /////////////// will reduce recall by 0.001
-        #     special_buckets['microsdhc sandisk extreme pro ' + capacity_list[idx]].append(idx)
         # elif brand_list[idx] == 'sony' and mem_list[idx] == 'microsd' and capacity_list[idx] == '128g':
         #     special_buckets['sony microsd 128g'].append(idx) /////////////// danger
         # print(brand_list[idx], '|', capacity_list[idx], '|', series_list[idx], '|', mem_list[idx], '|',
@@ -134,7 +133,7 @@ def block_x2(dataset: pd.DataFrame, max_limit):
 
     for key in special_buckets.keys():
         bucket = special_buckets[key]
-        if len(bucket) > 3:
+        if len(bucket) > 5:
             continue
         for i in range(len(bucket)):
             for j in range(i + 1, len(bucket)):
@@ -154,30 +153,19 @@ def block_x2(dataset: pd.DataFrame, max_limit):
     for key in buckets.keys():
         faiss_pairs = []
         bucket = buckets[key]
-        # if key == 'sandisk':
-        #     encodings = encode(model=sandisk_model, sentences=name_list[bucket], tokenizer=sandisk_tokenizer)
-        # else:
-        #     encodings = encode(model=my_model, sentences=name_list[bucket], tokenizer=tokenizer)
-        # embedding_matrix = encodings
         embedding_matrix = encodings[bucket]
         if key == 'sandisk':
             index_model = faiss.IndexHNSWFlat(len(embedding_matrix[0]), 16)
             index_model.hnsw.efConstruction = 100
             index_model.add(embedding_matrix)
             index_model.hnsw.efSearch = 512
-            D, I = index_model.search(embedding_matrix, 100)
-        elif key == '0':
-            index_model = faiss.IndexHNSWFlat(len(embedding_matrix[0]), 8)
-            index_model.hnsw.efConstruction = 100
-            index_model.add(embedding_matrix)
-            index_model.hnsw.efSearch = 256
-            D, I = index_model.search(embedding_matrix, 50)
+            D, I = index_model.search(embedding_matrix, 150)
         else:
             index_model = faiss.IndexHNSWFlat(len(embedding_matrix[0]), 8)
             index_model.hnsw.efConstruction = 100
             index_model.add(embedding_matrix)
             index_model.hnsw.efSearch = 256
-            D, I = index_model.search(embedding_matrix, 30)
+            D, I = index_model.search(embedding_matrix, 20)
         for i in range(len(D)):
             for j in range(len(D[0])):
                 index1 = bucket[i]
@@ -205,6 +193,8 @@ def block_x2(dataset: pd.DataFrame, max_limit):
                 if key == 'intenso':
                     # if 'intenso rainbow line usb-stick' in (name_list[index1], name_list[index2]):
                     #     continue
+                    # if 'intenso premium line usb-stick' in (name_list[index1], name_list[index2]):
+                    #     continue
                     if same_count <= 1 and item_code_list[index1] != '0' and item_code_list[index2] != '0' and \
                             item_code_list[index1] != item_code_list[index2] and mem_list[index1] == mem_list[
                         index2] == 'usb':
@@ -214,8 +204,6 @@ def block_x2(dataset: pd.DataFrame, max_limit):
                         index1] != capacity_list[index2] and capacity_list[index1] != '0' and capacity_list[
                         index2] != '0':
                         continue
-                    # if 'intenso premium line usb-stick' in (name_list[index1], name_list[index2]):
-                    #     continue
                     if same_count >= 4:
                         candidate_pairs.append((small, large, D[i][j]))
                     elif product_list[index1] == product_list[index2] == 'basic' and same_count >= 3:
@@ -223,9 +211,6 @@ def block_x2(dataset: pd.DataFrame, max_limit):
                     else:
                         faiss_pairs.append((small, large, D[i][j]))
                 elif key == 'sandisk':
-                    # if 'sandisk 8 gb tarjeta de memoria flash sdhc de clase 2 sdsdb-8192-a11: amazon.es: informática' in (
-                    #         name_list[index1], name_list[index2]):
-                    #     continue
                     if ('otg' in name_list[index1] and 'otg' not in name_list[index2]) or (
                             'otg' in name_list[index2] and 'otg' not in name_list[index1]):
                         continue
@@ -238,17 +223,23 @@ def block_x2(dataset: pd.DataFrame, max_limit):
                             item_code_list[index2] and mem_list[index1] == mem_list[index2] == 'sdhc':
                         continue
                     if capacity_list[index1] == capacity_list[index2] == '16g' and model_list[index1] == model_list[
-                        index2] == 'ext+' and mem_list[index1] != mem_list[index2]:
+                        index2] == 'ext+' and mem_list[index1] != mem_list[index2] != '0':
                         continue
                     if series_list[index1] == series_list[index2] == 'glide' and same_count >= 3 and capacity_list[
                         index1] == capacity_list[index2] in ('256g', '512g', '1t', '2t'):
                         candidate_pairs.append((small, large, D[i][j]))
-                    elif model_list[index1] == model_list[index2] == 'ext+' and same_count >= 3:
+                    elif model_list[index1] == model_list[index2] == 'ext+' and same_count >= 4:
                         candidate_pairs.append((small, large, D[i][j]))
                     elif capacity_list[index1] == capacity_list[index2] == '4g' and mem_list[index1] == mem_list[
                         index2] == 'microsd':
                         candidate_pairs.append((small, large, D[i][j]))
                     elif product_list[index1] == product_list[index2] == 'otg' and same_count >= 5:
+                        candidate_pairs.append((small, large, D[i][j]))
+                    elif capacity_list[index1] == capacity_list[index2] == '64g' and mem_list[index1] == mem_list[
+                        index2] == 'usb' and model_list[index1] == model_list[index2] == 'ultra':
+                        candidate_pairs.append((small, large, D[i][j]))
+                    elif capacity_list[index1] == capacity_list[index2] == '64g' and mem_list[index1] == mem_list[
+                        index2] == 'usb' and model_list[index1] == model_list[index2] == 'ultra':
                         candidate_pairs.append((small, large, D[i][j]))
                     else:
                         faiss_pairs.append((small, large, D[i][j]))
@@ -281,10 +272,10 @@ def block_x2(dataset: pd.DataFrame, max_limit):
                     else:
                         faiss_pairs.append((small, large, D[i][j]))
                 elif key == 'kingston':
-                    # if mem_list[index1] == mem_list[index2] == 'sd' and capacity_list[index1] == capacity_list[
-                    #     index2] == '128g' and product_list[index1] == product_list[index2] == 'uhs-i' and model_list[
-                    #     index1] != '0' and model_list[index2] != '0' and model_list[index1] != model_list[index2]:
-                    #     continue
+                    if mem_list[index1] == mem_list[index2] == 'sd' and capacity_list[index1] == capacity_list[
+                        index2] == '128g' and product_list[index1] == product_list[index2] == 'uhs-i' and model_list[
+                        index1] != '0' and model_list[index2] != '0' and model_list[index1] != model_list[index2]:
+                        continue
                     if same_count >= 5:
                         candidate_pairs.append((small, large, D[i][j]))
                     elif series_list[index1] == series_list[index2] == 'ultimate' and same_count >= 3:
