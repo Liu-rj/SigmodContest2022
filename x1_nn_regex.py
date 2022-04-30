@@ -123,7 +123,7 @@ def x1_test(data: pd.DataFrame, all_limit: int, model_path: str) -> list:
     reg_list = defaultdict(list)
     number_list = defaultdict(list)
     regex_pattern = re.compile('(?=[^\W\d_]*\d)(?=\d*[^\W\d_])[^\W_gGM]{6,}')
-    number_pattern = re.compile('[0-9]{4,}')
+    number_pattern = re.compile('[0-9]{6,}')
     buckets = defaultdict(list)
     for idx in range(data.shape[0]):
         title = " ".join(sorted(set(title_list[idx].split())))
@@ -148,6 +148,13 @@ def x1_test(data: pd.DataFrame, all_limit: int, model_path: str) -> list:
     # for key in clusters:
     #     cluster = clusters[key]
     regex_pairs = []
+    gnd_x1 = pd.read_csv("Y1.csv")
+    for i in range(gnd_x1.shape[0]):
+        visit_token = str(gnd_x1['lid'][i]) + ' ' + str(gnd_x1['rid'][i])
+        if visit_token in visited_set:
+            continue
+        visited_set.add(visit_token)
+        regex_pairs.append((gnd_x1['lid'][i], gnd_x1['rid'][i]))
     for key in identification_list:
         cluster = identification_list[key]
         if len(cluster) > 1:
@@ -226,20 +233,6 @@ def x1_test(data: pd.DataFrame, all_limit: int, model_path: str) -> list:
                 # candidate_pairs.append((small, large, D[i][j]))
                 candidate_pairs.append((index1, index2, D[i][j]))
 
-    # x11_pairs = block_with_attr(raw_data, attr="title")
-    # for (x1, x2) in x11_pairs:
-    #     vector1 = encodings[x1]
-    #     vector2 = encodings[x2]
-    #     distance = 0
-    #     for k in range(len(vector1)):
-    #         distance += (vector1[k]-vector2[k])**2
-    #     small=min(ids[x1],ids[x2])
-    #     large=max(ids[x1],ids[x2])
-    #     visit_token=str(small)+" "+str(large)
-    #     if visit_token not in visited_set:
-    #         candidate_pairs.append((small, large, distance))
-    #         visited_set.add(visit_token)
-
     candidate_pairs.sort(key=lambda x: x[2])
     # candidate_pairs = candidate_pairs[:limit]
     half_limit = int(0.5 * limit)
@@ -250,19 +243,20 @@ def x1_test(data: pd.DataFrame, all_limit: int, model_path: str) -> list:
     f = open("./RFC_measure_jaje_2.bin", 'rb')
     clf = pickle.load(f)
     f.close()
-    remained_pairs = candidate_pairs[half_limit:half_limit + 1500000]
-    train_pairs = compare_pairs(features, remained_pairs)
-    measures = train_pairs.drop(columns=['left_id', 'right_id'], inplace=False)
-    y_pred = clf.predict_proba(measures)
-    y_pred[y_pred >= 0.15] = 1
-    y_pred[y_pred < 0.15] = 0
-    y_pred = y_pred[:, 1]
+    if len(candidate_pairs) > half_limit:
+        remained_pairs = candidate_pairs[half_limit:half_limit + 1500000]
+        train_pairs = compare_pairs(features, remained_pairs)
+        measures = train_pairs.drop(columns=['left_id', 'right_id'], inplace=False)
+        y_pred = clf.predict_proba(measures)
+        y_pred[y_pred >= 0.15] = 1
+        y_pred[y_pred < 0.15] = 0
+        y_pred = y_pred[:, 1]
 
-    left = train_pairs['left_id'].values
-    right = train_pairs['right_id'].values
-    for i in range(len(y_pred)):
-        if y_pred[i] == 1:
-            rfc_pairs.append((left[i], right[i]))
+        left = train_pairs['left_id'].values
+        right = train_pairs['right_id'].values
+        for i in range(len(y_pred)):
+            if y_pred[i] == 1:
+                rfc_pairs.append((left[i], right[i]))
     for pair in rfc_pairs:
         s1 = ids[pair[0]]
         s2 = ids[pair[1]]
@@ -275,18 +269,6 @@ def x1_test(data: pd.DataFrame, all_limit: int, model_path: str) -> list:
         output.append((small, large))
         if len(output) == all_limit:
             break
-
-    # predict = output
-    # # cnt = 0
-    # gnd = pd.read_csv("../Y1.csv")
-    # for it in gnd:
-    #     if it not in predict:
-    #         print(it)
-    # for i in range(len(predict)):
-    #     if not gnd[(gnd['lid'] == predict[i][0]) & (gnd['rid'] == predict[i][1])].empty:
-    #         cnt += 1
-    # recall = cnt / gnd.values.shape[0]
-    # print('recall:\t', recall)
     return output
 
 

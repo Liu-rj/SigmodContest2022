@@ -33,10 +33,12 @@ def save_output(pairs_x1, expected_size_x1, pairs_x2, expected_size_x2):
 
 
 if __name__ == '__main__':
-    mode = 1
+    mode = 0
+    import os
+    os.environ['TOKENIZERS_PARALLELISM'] = 'True'
     if mode == 0:
         path = './fromstart_further_x1_berttiny_finetune_epoch20_margin0.01'
-        raw_data = pd.read_csv("X1.csv")
+        raw_data = pd.read_csv("../million_x1.csv")
         raw_data['title'] = raw_data.title.str.lower()
         candidates_x1 = x1_test(raw_data, 1000000, path)
         raw_data = pd.read_csv('X2.csv')
@@ -51,7 +53,7 @@ if __name__ == '__main__':
         path = './fromstart_further_x1_berttiny_finetune_epoch20_margin0.01'
         raw_data = pd.read_csv("X1.csv")
         raw_data['title'] = raw_data.title.str.lower()
-        candidates_x1 = x1_test(raw_data, 1000000, path)
+        candidates_x1 = x1_test(raw_data, 2814, path)
         raw_data = pd.read_csv('X2.csv')
         raw_data['name'] = raw_data.name.str.lower()
         features = extract_x2(raw_data)
@@ -115,3 +117,10 @@ if __name__ == '__main__':
         print('output pairs:\t', len(candidate_pairs))
         print('correct pairs:\t', sum(gnd['cnt']))
         print('recall:\t\t\t', sum(gnd['cnt']) / gnd.values.shape[0])
+        
+        origin_data = pd.read_csv("./X1.csv")
+        origin_gnd = pd.read_csv("./Y1.csv")
+        origin_data['title'] = origin_data.title.str.lower()
+        origin_data = origin_data[['id', 'title']]
+        origin_pairs = x1_test(origin_data, 2814, path)
+        print("Model: %s, origin recall: %f" % (path, recall_calculation(origin_pairs, origin_gnd)))
