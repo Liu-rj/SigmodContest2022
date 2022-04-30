@@ -1,12 +1,14 @@
 # Pycharm project
 .idea/
 
-# Unused csv
+# Unused
 output.csv
 X2_BIG.csv
 data/big/
 RF_dataset/
 RandomForestTrain.py
+CoSent/x2_bertmini_sandisk/
+
 # Unused bash
 *.sh
 
