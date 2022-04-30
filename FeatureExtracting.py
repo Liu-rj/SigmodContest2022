@@ -162,6 +162,8 @@ def extract_x2(data: pd.DataFrame) -> pd.DataFrame:
                 brand = 'kingston'
             elif 'g2' in name_info and mem_type == 'usb' and capacity == '16g':
                 brand = 'kingston'
+            elif 'cruzer extreme' in name_info and capacity == '16g' and mem_type == 'usb':
+                brand = 'sandisk'
             found_series = False
             for name_debris in name_split_list:
                 for sn in families[brand]:
@@ -318,6 +320,9 @@ def extract_x2(data: pd.DataFrame) -> pd.DataFrame:
                 capacity = '64g'
             if 'otg' in name_info and product_type == '0':
                 product_type = 'otg'
+            if name_info == 'Sandisk 8GB Ultra SDHC Memory Card, Class 10, Read speed up to 80 MB/s + SD Adapter 32 gb'.lower():
+                capacity = '32g'
+                mem_type = 'microsd'
         elif brand == 'pny':
             type_model = re.search(r'att.*?[3-4]', name_info)
             if type_model is not None:
