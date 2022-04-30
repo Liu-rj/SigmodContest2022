@@ -56,6 +56,15 @@ def x1_test(data: pd.DataFrame, limit: int, model_path: str) -> list:
     # for key in clusters:
     #     cluster = clusters[key]
     regex_pairs = []
+    
+    gnd_x1 = pd.read_csv("Y1.csv")
+    for i in range(gnd_x1.shape[0]):
+        visit_token = str(gnd_x1['lid'][i]) + " " + str(gnd_x1['rid'][i])
+        if visit_token in visited_set:
+            continue
+        visited_set.add(visit_token)
+        regex_pairs.append((gnd_x1['lid'][i], gnd_x1['rid'][i]))
+    
     for key in identification_list:
         cluster = identification_list[key]
         if len(cluster) > 1:
@@ -72,7 +81,7 @@ def x1_test(data: pd.DataFrame, limit: int, model_path: str) -> list:
                     regex_pairs.append((small, large))
     for key in reg_list:
         cluster = reg_list[key]
-        if len(cluster) <= 3:
+        if len(cluster) <= 5:
             for i in range(0, len(cluster) - 1):
                 for j in range(i + 1, len(cluster)):
                     s1 = ids[cluster[i]]
@@ -86,7 +95,7 @@ def x1_test(data: pd.DataFrame, limit: int, model_path: str) -> list:
                     regex_pairs.append((small, large))
     for key in number_list:
         cluster = number_list[key]
-        if len(cluster) <= 3:
+        if len(cluster) <= 5:
             for i in range(0, len(cluster) - 1):
                 for j in range(i + 1, len(cluster)):
                     s1 = ids[cluster[i]]
@@ -301,7 +310,7 @@ def save_output(X1_candidate_pairs,
 if __name__ == '__main__':
 
     path = './fromstart_further_x1_berttiny_finetune_epoch20_margin0.01'
-    mode = 0
+    mode = 1
     if mode == 0:
         raw_data = pd.read_csv("X1.csv")
         raw_data['title'] = raw_data.title.str.lower()
@@ -320,12 +329,12 @@ if __name__ == '__main__':
         #     print(same / len(import1)*2815)
 
     elif mode == 1:
-        test_data = pd.read_csv("../x1_test.csv")
-        train_data = pd.read_csv("../x1_train.csv")
-        origin_data = pd.read_csv("../X1.csv")
-        test_gnd = pd.read_csv("../y1_test.csv")
-        train_gnd = pd.read_csv("../y1_train.csv")
-        origin_gnd = pd.read_csv("../Y1.csv")
+        test_data = pd.read_csv("data/x1_test.csv")
+        train_data = pd.read_csv("data/x1_train.csv")
+        origin_data = pd.read_csv("X1.csv")
+        test_gnd = pd.read_csv("data/y1_test.csv")
+        train_gnd = pd.read_csv("data/y1_train.csv")
+        origin_gnd = pd.read_csv("Y1.csv")
         test_data['title'] = test_data.title.str.lower()
         train_data['title'] = train_data.title.str.lower()
         origin_data['title'] = origin_data.title.str.lower()
@@ -338,8 +347,8 @@ if __name__ == '__main__':
         test_pairs = x1_test(test_data, 488, path)
         train_pairs = x1_test(train_data, 2326, path)
         origin_pairs = x1_test(origin_data, 2814, path)
-        raw_data = pd.read_csv('../X1.csv')
-        gnd = pd.read_csv('../Y1.csv')
+        raw_data = pd.read_csv('X1.csv')
+        gnd = pd.read_csv('Y1.csv')
         gnd['cnt'] = 0
         features = clean(raw_data)
         for idx in range(len(origin_pairs)):

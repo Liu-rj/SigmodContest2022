@@ -79,7 +79,7 @@ def extract_x2(data: pd.DataFrame) -> pd.DataFrame:
         if len(hybrid) > 0:
             hybrid_ns = ' '.join(sorted(hybrid))
 
-        hybrid = re.findall(r'[0-9]{3,}', name_info)
+        hybrid = re.findall(r'[0-9]{4,}', name_info)
         if len(hybrid) > 0:
             long_num = ' '.join(sorted(hybrid))
 

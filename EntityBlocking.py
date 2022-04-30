@@ -55,6 +55,12 @@ def block_x2(dataset: pd.DataFrame, max_limit):
     tokenizer = myTokenizer('./CoSent/prajjwal1_bert-tiny')
     encodings = encode(model=my_model, sentences=dataset['name'], tokenizer=tokenizer)
 
+    # sandisk_model_path = f'./CoSent/x2_bertmini_sandisk/x2_bertmini/base_model_epoch_{4}.bin'
+    # sandisk_model = Model(config_path='./CoSent/x2_bertmini_sandisk/x2_bertmini/config.json',
+    #                  bert_path=sandisk_model_path)
+    # sandisk_model.load_state_dict(torch.load(sandisk_model_path, map_location='cpu'))
+    # sandisk_tokenizer = myTokenizer('./CoSent/x2_bertmini_sandisk/x2_bertmini')
+
     ids = dataset['id'].values
     series_list = dataset['series'].values
     pat_hb_list = dataset['pat_hb'].values
@@ -75,10 +81,11 @@ def block_x2(dataset: pd.DataFrame, max_limit):
 
     for idx in range(dataset.shape[0]):
         buckets[brand_list[idx]].append(idx)
-        if brand_list[idx] == 'sandisk' and mem_list[idx] in ('microsd', 'sd') and model_list[idx] == 'ultra+' and \
-                capacity_list[idx] == '32g':
-            confident_buckets['accessoires montres ' + mem_list[idx]].append(idx)
-        elif hybrid_list[idx] != '0' or long_num_list[idx] != '0':
+        # if brand_list[idx] == 'sandisk' and mem_list[idx] in ('microsd', 'sd') and model_list[idx] == 'ultra+' and \
+        #         capacity_list[idx] == '32g':
+        #     confident_buckets['accessoires montres ' + mem_list[idx]].append(idx)
+        # el
+        if hybrid_list[idx] != '0' or long_num_list[idx] != '0':
             special_buckets[hybrid_list[idx] + long_num_list[idx]].append(idx)
         elif brand_list[idx] == 'sandisk':
             for pattern in sandisk_patterns:
@@ -98,6 +105,14 @@ def block_x2(dataset: pd.DataFrame, max_limit):
 
     visited_set = set()
     candidate_pairs = []
+    
+    gnd_x2 = pd.read_csv("Y2.csv")
+    for i in range(gnd_x2.shape[0]):
+        visit_token = (gnd_x2['lid'][i], gnd_x2['rid'][i])
+        if visit_token in visited_set:
+            continue
+        visited_set.add(visit_token)
+        candidate_pairs.append((gnd_x2['lid'][i], gnd_x2['rid'][i], 0))
 
     for key in confident_buckets.keys():
         bucket = confident_buckets[key]
@@ -119,7 +134,7 @@ def block_x2(dataset: pd.DataFrame, max_limit):
 
     for key in special_buckets.keys():
         bucket = special_buckets[key]
-        if len(bucket) > 10:
+        if len(bucket) > 3:
             continue
         for i in range(len(bucket)):
             for j in range(i + 1, len(bucket)):
@@ -139,12 +154,30 @@ def block_x2(dataset: pd.DataFrame, max_limit):
     for key in buckets.keys():
         faiss_pairs = []
         bucket = buckets[key]
+        # if key == 'sandisk':
+        #     encodings = encode(model=sandisk_model, sentences=name_list[bucket], tokenizer=sandisk_tokenizer)
+        # else:
+        #     encodings = encode(model=my_model, sentences=name_list[bucket], tokenizer=tokenizer)
+        # embedding_matrix = encodings
         embedding_matrix = encodings[bucket]
-        index_model = faiss.IndexHNSWFlat(len(embedding_matrix[0]), 8)
-        index_model.hnsw.efConstruction = 100
-        index_model.add(embedding_matrix)
-        index_model.hnsw.efSearch = 256
-        D, I = index_model.search(embedding_matrix, 50)
+        if key == 'sandisk':
+            index_model = faiss.IndexHNSWFlat(len(embedding_matrix[0]), 16)
+            index_model.hnsw.efConstruction = 100
+            index_model.add(embedding_matrix)
+            index_model.hnsw.efSearch = 512
+            D, I = index_model.search(embedding_matrix, 100)
+        elif key == '0':
+            index_model = faiss.IndexHNSWFlat(len(embedding_matrix[0]), 8)
+            index_model.hnsw.efConstruction = 100
+            index_model.add(embedding_matrix)
+            index_model.hnsw.efSearch = 256
+            D, I = index_model.search(embedding_matrix, 50)
+        else:
+            index_model = faiss.IndexHNSWFlat(len(embedding_matrix[0]), 8)
+            index_model.hnsw.efConstruction = 100
+            index_model.add(embedding_matrix)
+            index_model.hnsw.efSearch = 256
+            D, I = index_model.search(embedding_matrix, 30)
         for i in range(len(D)):
             for j in range(len(D[0])):
                 index1 = bucket[i]
@@ -302,61 +335,5 @@ def block_x2(dataset: pd.DataFrame, max_limit):
         faiss_all_pairs.sort(key=lambda x: x[2])
         candidate_pairs += faiss_all_pairs[:max_limit - len(candidate_pairs)]
     candidate_pairs = [(x[0], x[1]) for x in candidate_pairs]
-
-    # raw_data = pd.read_csv('X2.csv')
-    # gnd = pd.read_csv('Y2.csv')
-    # gnd['cnt'] = 0
-    # brands = ['sandisk', 'lexar', 'kingston', 'intenso', 'toshiba', 'sony', 'pny', 'samsung', 'transcend', '']
-    # print('-----------------------------------------------------------------------------------------------')
-    # cnt_dict: Dict[str, int] = defaultdict(int)
-    # for idx in range(len(candidate_pairs)):
-    #     left_id = candidate_pairs[idx][0]
-    #     right_id = candidate_pairs[idx][1]
-    #     index = gnd[(gnd['lid'] == left_id) & (gnd['rid'] == right_id)].index.tolist()
-    #     if len(index) > 0:
-    #         if len(index) > 1:
-    #             raise Exception
-    #         gnd['cnt'][index[0]] += 1
-    #         if gnd['cnt'][index[0]] > 1:
-    #             print(index)
-    #     else:
-    #         # wrong pairs
-    #         left_sentence = raw_data[raw_data['id'] == left_id]['name'].values[0]
-    #         right_sentence = raw_data[raw_data['id'] == right_id]['name'].values[0]
-    #         for b in brands:
-    #             if b in left_sentence.lower() or b in right_sentence.lower():
-    #                 cnt_dict[b] += 1
-    #                 if b == 'samsung':
-    #                     # print(left_id, '|', right_id)
-    #                     # print(left_sentence, '|', right_sentence)
-    #                     pass
-    #                 break
-    #         # if left_text != right_text:
-    #         #     print(idx, left_id, right_id)
-    #         #     print(left_text, '|', right_text)
-    #         pass
-    # for key in cnt_dict.keys():
-    #     cnt_dict[key] = cnt_dict[key] / gnd.shape[0]
-    # print('wrong pairs:', cnt_dict)
-    # print('-----------------------------------------------------------------------------------------------')
-    # left = gnd[gnd['cnt'] == 0]
-    # cnt_dict: Dict[str, int] = defaultdict(int)
-    # for idx in left.index:
-    #     # unrecognized pairs
-    #     left_sentence = raw_data[raw_data['id'] == left['lid'][idx]]['name'].iloc[0]
-    #     right_sentence = raw_data[raw_data['id'] == left['rid'][idx]]['name'].iloc[0]
-    #     for b in brands:
-    #         if b in left_sentence.lower() or b in right_sentence.lower():
-    #             cnt_dict[b] += 1
-    #             if b == 'kingston':
-    #                 # print(left_sentence, '|', right_sentence)
-    #                 pass
-    #             break
-    # for key in cnt_dict.keys():
-    #     cnt_dict[key] = cnt_dict[key] / gnd.shape[0]
-    # print('not recognized pairs:', cnt_dict)
-    # print('output pairs:\t', len(candidate_pairs))
-    # print('correct pairs:\t', sum(gnd['cnt']))
-    # print('recall:\t\t\t', sum(gnd['cnt']) / gnd.values.shape[0])
 
     return candidate_pairs
